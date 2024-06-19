@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import Card from "@/components/Card";
 import Sidebar from "@/components/Sidebar";
 import TextEditor from "@/components/TextEditor"; // Adjust the path as necessary
+import { cn } from "@/lib/utils";
 
 export interface Note {
   id: string;
@@ -36,11 +37,15 @@ const Page = () => {
 
   const saveNote = () => {
     console.log("Saving note...", currentNoteId, editorText);
-    
-    if(!editorText.length) return;
+
+    if (!editorText.length) return;
 
     if (currentNoteId) {
-      setNotes(notes.map(note => note.id === currentNoteId ? { ...note, content: editorText } : note));
+      setNotes(
+        notes.map((note) =>
+          note.id === currentNoteId ? { ...note, content: editorText } : note
+        )
+      );
       setCurrentNoteId(null);
     } else {
       addNote();
@@ -49,28 +54,38 @@ const Page = () => {
   };
 
   const deleteNote = (id: string) => () => {
-    setNotes(notes.filter(note => note.id !== id));
+    setNotes(notes.filter((note) => note.id !== id));
   };
-  
+
   return (
     <div className="flex">
-      <Sidebar onClick={() => { setCurrentNoteId(null); setEditorText(''); setIsOpen(true); }} />
+      <Sidebar
+        onClick={() => {
+          setCurrentNoteId(null);
+          setEditorText("");
+          setIsOpen(true);
+        }}
+      />
 
       <section className="flex min-h-screen flex-1 flex-col px-6 py-6 max-md:pb-14 sm:px-14">
-        <div className="w-full flex">
+        <div className="flex flex-wrap gap-2">
           {notes.map((note) => (
-            <div key={note.id} >
-              <Card note={note} onDelete={deleteNote(note.id)} onClick={() => openNoteEditor(note)} />
-            </div>
+            <Card
+              isOpen={isOpen}
+              key={note.id}
+              note={note}
+              onClick={() => openNoteEditor(note)}
+            />
           ))}
         </div>
 
-        <TextEditor 
-          isOpen={isOpen} 
+        <TextEditor
+          isOpen={isOpen}
           onClose={() => setIsOpen(false)}
           content={editorText}
           setContent={setEditorText}
           onSave={saveNote}
+          onDelete={currentNoteId ? deleteNote(currentNoteId) : undefined}
         />
       </section>
     </div>
