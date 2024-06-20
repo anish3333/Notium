@@ -28,9 +28,9 @@ const Card: React.FC<CardProps> = ({ note, onClick, isOpen }) => {
     <div
       className={cn(
         "bg-gray-800 rounded-lg shadow-md p-6 m-2 w-50 cursor-pointer",
-        {
-          hidden: isOpen,
-        }
+        // {
+        //   hidden: isOpen,
+        // }
       )}
       onClick={handleClick}
     >

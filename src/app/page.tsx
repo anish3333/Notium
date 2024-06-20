@@ -3,7 +3,7 @@
 
 import React, { useState } from "react";
 import Card from "@/components/Card";
-import Sidebar from "@/components/Sidebar";
+import AddButton from "@/components/AddButton";
 import TextEditor from "@/components/TextEditor"; // Adjust the path as necessary
 import { cn } from "@/lib/utils";
 
@@ -58,37 +58,44 @@ const Page = () => {
   };
 
   return (
-    <div className="flex">
-      <Sidebar
+    <>
+      <AddButton
         onClick={() => {
           setCurrentNoteId(null);
           setEditorText("");
           setIsOpen(true);
         }}
       />
+      <div className="flex">
+        <section className="flex min-h-screen flex-col px-6 py-6 max-md:pb-14 sm:px-14">
+          <div className="flex flex-wrap gap-2">
+            {notes.map((note) => (
+              isOpen && currentNoteId === note.id ? (
+                <div key={note.id} className="w-64 h-32 bg-slate-950"></div>
+              ) : (
+                <div>
+                  <Card
+                    isOpen={isOpen}
+                    key={note.id}
+                    note={note}
+                    onClick={() => openNoteEditor(note)}
+                  />
+                </div>
+              )
+            ))}
+          </div>
 
-      <section className="flex min-h-screen flex-1 flex-col px-6 py-6 max-md:pb-14 sm:px-14">
-        <div className="flex flex-wrap gap-2">
-          {notes.map((note) => (
-            <Card
-              isOpen={isOpen}
-              key={note.id}
-              note={note}
-              onClick={() => openNoteEditor(note)}
-            />
-          ))}
-        </div>
-
-        <TextEditor
-          isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
-          content={editorText}
-          setContent={setEditorText}
-          onSave={saveNote}
-          onDelete={currentNoteId ? deleteNote(currentNoteId) : undefined}
-        />
-      </section>
-    </div>
+          <TextEditor
+            isOpen={isOpen}
+            onClose={() => setIsOpen(false)}
+            content={editorText}
+            setContent={setEditorText}
+            onSave={saveNote}
+            onDelete={currentNoteId ? deleteNote(currentNoteId) : undefined}
+          />
+        </section>
+      </div>
+    </>
   );
 };
 

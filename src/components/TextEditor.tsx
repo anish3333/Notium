@@ -62,7 +62,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
             onChange={setContent}
             modules={modules}
             formats={formats}
-            className="w-full h-64"
+            className="w-full h-[10rem]"
           />
           <div className="flex justify-end mt-4 gap-4">
             <button
