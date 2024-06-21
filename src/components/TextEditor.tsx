@@ -8,8 +8,8 @@ interface TextEditorProps {
   onClose: () => void;
   content: string;
   setContent: (content: string) => void;
-  onSave: () => void;
-  onDelete?: () => void;
+  onSave: () => Promise<void>;
+  onDelete?: () => Promise<void> | undefined;
 }
 
 const TextEditor: React.FC<TextEditorProps> = ({
@@ -39,14 +39,14 @@ const TextEditor: React.FC<TextEditorProps> = ({
     "link",
   ];
 
-  const handleSaveAndClose = () => {
-    onSave();
+  const handleSaveAndClose = async () => {
+    await onSave();
     onClose();
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if(onDelete) {
-      onDelete();
+      await onDelete();
     }
     onClose();
   };

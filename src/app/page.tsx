@@ -1,32 +1,76 @@
-// pages/Page.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useUser } from "@clerk/nextjs"; // Import Clerk's useUser hook
 import Card from "@/components/Card";
 import AddButton from "@/components/AddButton";
 import TextEditor from "@/components/TextEditor"; // Adjust the path as necessary
+import {
+  collection,
+  addDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  where,
+} from "firebase/firestore";
 import { cn } from "@/lib/utils";
+import { db } from "@/firebase/firebaseConfig";
 
 export interface Note {
   id: string;
   content: string;
   createdAt: string;
+  userId: string; // Add userId field
 }
 
 const Page = () => {
+  const { user } = useUser(); // Get the current user
   const [notes, setNotes] = useState<Note[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [editorText, setEditorText] = useState<string>("");
   const [currentNoteId, setCurrentNoteId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const addNote = () => {
+  const fetchNotes = async () => {
+    if (!user) return;
+    try {
+      const notesCollection = collection(db, "notes");
+      const notesQuery = query(notesCollection, where("userId", "==", user.id));
+      const notesSnapshot = await getDocs(notesQuery);
+      const notesList = notesSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Note[];
+
+      setNotes(notesList);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching notes:", error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // console.log(user);
+    fetchNotes();
+  }, [user]);
+
+  const addNote = async () => {
+    if (!user) return;
     const newNote = {
-      id: crypto.randomUUID(),
       content: editorText,
       createdAt: new Date().toISOString(),
+      userId: user.id,
     };
-    setNotes([...notes, newNote]);
-    setEditorText(""); // Clear editor text after adding a note
+    try {
+      await addDoc(collection(db, "notes"), newNote);
+      setEditorText("");
+      fetchNotes();
+    } catch (error) {
+      console.error("Error adding document: ", error);
+    }
   };
 
   const openNoteEditor = (note: Note) => {
@@ -35,27 +79,38 @@ const Page = () => {
     setIsOpen(true);
   };
 
-  const saveNote = () => {
-    console.log("Saving note...", currentNoteId, editorText);
+  const saveNote = async () => {
+    // console.log("Saving note...", currentNoteId, editorText);
 
     if (!editorText.length) return;
 
-    if (currentNoteId) {
-      setNotes(
-        notes.map((note) =>
-          note.id === currentNoteId ? { ...note, content: editorText } : note
-        )
-      );
-      setCurrentNoteId(null);
-    } else {
-      addNote();
+    try {
+      if (currentNoteId) {
+        const noteRef = doc(db, "notes", currentNoteId);
+        await updateDoc(noteRef, { content: editorText });
+        setCurrentNoteId(null);
+      } else {
+        await addNote();
+      }
+      setIsOpen(false);
+      fetchNotes();
+    } catch (error) {
+      console.error("Error updating document: ", error);
     }
-    setIsOpen(false); // Close the editor after saving
   };
 
-  const deleteNote = (id: string) => () => {
-    setNotes(notes.filter((note) => note.id !== id));
+  const deleteNote = async (id: string) => {
+    if (!id) return;
+    const noteRef = doc(db, "notes", id);
+    try {
+      await deleteDoc(noteRef);
+      fetchNotes();
+    } catch (error) {
+      console.error("Error deleting document: ", error);
+    }
   };
+
+  if (!notes) return;
 
   return (
     <>
@@ -69,20 +124,20 @@ const Page = () => {
       <div className="flex">
         <section className="flex min-h-screen flex-col px-6 py-6 max-md:pb-14 sm:px-14">
           <div className="flex flex-wrap gap-2">
-            {notes.map((note) => (
+            {loading && <div className="w-64 h-32 text-white">Loading..</div>}
+            {notes.map((note) =>
               isOpen && currentNoteId === note.id ? (
                 <div key={note.id} className="w-64 h-32 bg-slate-950"></div>
               ) : (
-                <div>
+                <div key={note.id}>
                   <Card
                     isOpen={isOpen}
-                    key={note.id}
                     note={note}
                     onClick={() => openNoteEditor(note)}
                   />
                 </div>
               )
-            ))}
+            )}
           </div>
 
           <TextEditor
@@ -91,7 +146,7 @@ const Page = () => {
             content={editorText}
             setContent={setEditorText}
             onSave={saveNote}
-            onDelete={currentNoteId ? deleteNote(currentNoteId) : undefined}
+            onDelete={() => deleteNote(currentNoteId || "")} // Fix delete handler
           />
         </section>
       </div>
