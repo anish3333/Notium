@@ -166,15 +166,9 @@ const Page = () => {
             )}
           </div>
         </section>
+        
       </div>
-      <TextEditor
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        content={editorText}
-        setContent={setEditorText}
-        onSave={saveNote}
-        onDelete={() => deleteNote(currentNoteId || "")} // Fix delete handler
-      />
+      
     </>
   );
 };

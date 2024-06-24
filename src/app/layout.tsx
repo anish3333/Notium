@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import Navbar from "@/components/Navbar";
+import UserProvider from "@/context/UserContext";
+import NotesListProvider from "@/context/NotesListContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -32,9 +34,10 @@ export default function RootLayout({
       }}
     >
       <html lang="en">
-        
         <body className={`${inter.className} bg-slate-950`}>
-          {children}
+          <NotesListProvider>
+            <UserProvider>{children}</UserProvider>
+          </NotesListProvider>
         </body>
       </html>
     </ClerkProvider>
