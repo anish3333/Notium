@@ -54,17 +54,17 @@ const TextEditor: React.FC<TextEditorProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={handleSaveAndClose}>
       {/* <DialogOverlay className="fixed inset-0 bg-black bg-opacity-30 justify-center w-fit h-fit" /> */}
-      <DialogContent className="fixed inset-0 flex items-center justify-center p-4 w-fit h-fit m-auto ">
-        <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 flex flex-col gap-9">
+      <DialogContent className="fixed inset-0 flex items-center min-h-2xl justify-center p-4 w-fit m-auto ">
+        <div className="bg-white rounded-lg shadow-lg w-full p-6 flex flex-col gap-9">
           <ReactQuill
             theme="snow"
             value={content}
             onChange={setContent}
             modules={modules}
             formats={formats}
-            className="w-full h-[10rem]"
+            className="w-full h-[10rem] resize-none"
           />
-          <div className="flex justify-end mt-4 gap-4">
+          <div className="flex justify-end mt-10 gap-4">
             <button
               onClick={handleSaveAndClose}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"

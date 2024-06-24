@@ -17,12 +17,14 @@ import {
 } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 import { db } from "@/firebase/firebaseConfig";
+import Navbar from "@/components/Navbar";
 
 export interface Note {
   id: string;
   content: string;
   createdAt: string;
   userId: string; // Add userId field
+  // pinned: false;
 }
 
 const Page = () => {
@@ -32,6 +34,7 @@ const Page = () => {
   const [editorText, setEditorText] = useState<string>("");
   const [currentNoteId, setCurrentNoteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedNotes, setSelectedNotes] = useState<Note[]>([]);
 
   const fetchNotes = async () => {
     if (!user) return;
@@ -110,10 +113,23 @@ const Page = () => {
     }
   };
 
+  const deleteSelectedNotes = async () => {
+    if (!selectedNotes.length) return;
+    try {
+      await Promise.all(selectedNotes.map((note) => deleteNote(note.id)));
+      fetchNotes();
+    } catch (error) {
+      console.error("Error deleting documents: ", error);
+    }
+  };
+
   if (!notes) return;
 
   return (
     <>
+      <Navbar 
+        deleteSelectedNotes={deleteSelectedNotes} 
+      />
       <AddButton
         onClick={() => {
           setCurrentNoteId(null);
@@ -121,35 +137,44 @@ const Page = () => {
           setIsOpen(true);
         }}
       />
-      <div className="flex">
+      <div className="flex justify-center">
         <section className="flex min-h-screen flex-col px-6 py-6 max-md:pb-14 sm:px-14">
-          <div className="flex flex-wrap gap-2">
+          <div className="columns-2 md:columns-3 lg:columns-4 gap-x-4 space-y-4">
             {loading && <div className="w-64 h-32 text-white">Loading..</div>}
             {notes.map((note) =>
               isOpen && currentNoteId === note.id ? (
-                <div key={note.id} className="w-64 h-32 bg-slate-950"></div>
+                <div
+                  key={note.id}
+                  className="w-64 h-32 bg-slate-950 mb-4"
+                ></div>
               ) : (
-                <div key={note.id}>
-                  <Card
-                    isOpen={isOpen}
-                    note={note}
-                    onClick={() => openNoteEditor(note)}
-                  />
-                </div>
+                // <div key={note.id} className="mb-4 break-inside-avoid-column">
+                <Card
+                  isOpen={isOpen}
+                  note={note}
+                  onClick={() => openNoteEditor(note)}
+                  selectNote={() => setSelectedNotes([...selectedNotes, note])}
+                  unselectNote={() =>
+                    setSelectedNotes(
+                      selectedNotes.filter((n) => n.id !== note.id)
+                    )
+                  }
+                  selectedNotes={selectedNotes}
+                />
+                // </div>
               )
             )}
           </div>
-
-          <TextEditor
-            isOpen={isOpen}
-            onClose={() => setIsOpen(false)}
-            content={editorText}
-            setContent={setEditorText}
-            onSave={saveNote}
-            onDelete={() => deleteNote(currentNoteId || "")} // Fix delete handler
-          />
         </section>
       </div>
+      <TextEditor
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        content={editorText}
+        setContent={setEditorText}
+        onSave={saveNote}
+        onDelete={() => deleteNote(currentNoteId || "")} // Fix delete handler
+      />
     </>
   );
 };

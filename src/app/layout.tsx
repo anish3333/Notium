@@ -34,7 +34,6 @@ export default function RootLayout({
       <html lang="en">
         
         <body className={`${inter.className} bg-slate-950`}>
-          <Navbar />
           {children}
         </body>
       </html>
