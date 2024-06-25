@@ -59,12 +59,12 @@ const Page = () => {
   };
 
   return (
-    <>
+    <div>
       <Navbar deleteSelectedNotes={deleteSelectedNotes} />
       <AddButton onClick={() => setIsOpen(true)} />
-      <div className="flex justify-center w-full overflow-x-hidden">
-        <section className="flex min-h-screen flex-col px-6 py-6 max-md:pb-14 sm:px-14 w-full">
-          <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+      <div className="flex justify-center overflow-x-hidden">
+        <section className="flex min-h-screen flex-col px-6 py-6 max-md:pb-14 sm:px-14">
+          <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-3 xl:columns-4 gap-4 space-y-4">
             {notesList.map((note) => (
               <Card
                 key={note.id}
@@ -91,7 +91,7 @@ const Page = () => {
           />
         </section>
       </div>
-    </>
+    </div>
   );
 };
 
