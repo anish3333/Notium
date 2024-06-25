@@ -1,3 +1,4 @@
+'use client';
 import TextEditor from '@/components/TextEditor';
 import { NotesListContext } from '@/context/NotesListContext';
 import { useParams, useRouter } from 'next/navigation';
@@ -7,18 +8,17 @@ const Page = () => {
   const { id } = useParams();
   const router = useRouter();
 
-  const { notesList, reloadNotesList, deleteNote } = useContext(NotesListContext);
+  const { notesList, reloadNotesList, deleteNote, saveNote } = useContext(NotesListContext);
   const note = notesList.find((note) => note.id === id);
 
   const setContent = async (content: string) => {
     if (!note) return;
     note.content = content;
-    await reloadNotesList();
   };
 
   const handleSave = async () => {
     if (!note) return;
-    await reloadNotesList();
+    await saveNote(note);
   };
 
   const handleDelete = async () => {

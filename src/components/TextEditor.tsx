@@ -8,7 +8,7 @@ interface TextEditorProps {
   onClose: () => void;
   content: string;
   setContent: (content: string) => void;
-  onSave: () => Promise<void>;
+  onSave?: () => Promise<void>;
   onDelete?: () => Promise<void> | undefined;
 }
 
@@ -40,7 +40,9 @@ const TextEditor: React.FC<TextEditorProps> = ({
   ];
 
   const handleSaveAndClose = async () => {
-    await onSave();
+    if(onSave) {
+      await onSave();
+    }
     onClose();
   };
 

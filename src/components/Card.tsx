@@ -1,5 +1,5 @@
 import React from 'react';
-import { Note } from '@/app/page'; // Adjust the import path as needed
+import { Note } from '@/app/(root)/page'; // Adjust the import path as needed
 import { cn } from '@/lib/utils';
 
 interface CardProps {

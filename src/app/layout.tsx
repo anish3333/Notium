@@ -40,6 +40,7 @@ export default function RootLayout({
           </NotesListProvider>
         </body>
       </html>
+      
     </ClerkProvider>
   );
 }
