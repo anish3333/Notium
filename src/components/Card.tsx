@@ -1,6 +1,6 @@
 import React from 'react';
-import { Note } from '@/app/(root)/page'; // Adjust the import path as needed
 import { cn } from '@/lib/utils';
+import { Note } from '@/types';
 
 interface CardProps {
   note: Note;
@@ -42,7 +42,7 @@ const Card: React.FC<CardProps> = ({ note, onClick, selectNote, unselectNote, se
   return (
     <div
       className={cn(
-        'bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 cursor-pointer relative group break-inside-avoid-column', {
+        'bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 cursor-pointer  group break-inside-avoid-column', {
           "border border-white": isSelected,
         }
       )}

@@ -3,6 +3,6 @@ export interface Note {
   content: string;
   createdAt: string;
   userId: string; // Add userId field
-  imageUrl: string;
+  imageUrl: string[];
   // pinned: false;
 }
