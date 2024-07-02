@@ -1,13 +1,15 @@
-import React from "react";
-import { Dialog, DialogContent, DialogOverlay } from "@radix-ui/react-dialog";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css"; // Import styles for React Quill
+import React, { useState } from "react";
+import { Dialog, DialogContent } from "@radix-ui/react-dialog";
+import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import { storage } from "@/firebase/firebaseConfig"; // Ensure you have this configured
 
 interface TextEditorProps {
   isOpen: boolean;
   onClose: () => void;
   content: string;
   setContent: (content: string) => void;
+  imageUrl: string;
+  setImageUrl: (url: string) => void;
   onSave?: () => Promise<void>;
   onDelete?: () => Promise<void> | undefined;
 }
@@ -17,72 +19,96 @@ const TextEditor: React.FC<TextEditorProps> = ({
   onClose,
   content,
   setContent,
+  imageUrl,
+  setImageUrl,
   onSave,
   onDelete
 }) => {
-  const modules = {
-    toolbar: [
-      [{ header: "1" }, { header: "2" }, "bold", "italic", "underline"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      ["link"],
-      ["clean"],
-    ],
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const storageRef = ref(storage, `images/${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    uploadTask.on(
+      "state_changed",
+      () => {
+        setUploading(true);
+        setUploadError(null);
+      },
+      (error) => {
+        setUploading(false);
+        setUploadError(error.message);
+      },
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        setImageUrl(downloadURL);
+        setUploading(false);
+      }
+    );
   };
 
-  const formats = [
-    "header",
-    "bold",
-    "italic",
-    "underline",
-    "list",
-    "bullet",
-    "link",
-  ];
-
   const handleSaveAndClose = async () => {
-    if(onSave) {
+    if (onSave) {
       await onSave();
     }
     onClose();
   };
 
   const handleDelete = async () => {
-    if(onDelete) {
+    if (onDelete) {
       await onDelete();
     }
     onClose();
   };
 
+  const handleRemoveImage = () => {
+    setImageUrl("");
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleSaveAndClose}>
-      {/* <DialogOverlay className="fixed inset-0 bg-black bg-opacity-30 justify-center w-fit h-fit" /> */}
-      <DialogContent className="fixed inset-0 flex items-center min-h-2xl justify-center p-4 w-fit m-auto ">
-        <div className="bg-white rounded-lg shadow-lg w-full p-6 flex flex-col gap-9">
-          <ReactQuill
-            theme="snow"
+      <DialogContent className="fixed inset-0 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 flex flex-col gap-4">
+          <textarea
             value={content}
-            onChange={setContent}
-            modules={modules}
-            formats={formats}
-            className="w-full h-[10rem] resize-none"
+            onChange={(e) => setContent(e.target.value)}
+            className="w-full h-32 p-2 border rounded-md"
+            placeholder="Enter your note content..."
           />
-          <div className="flex justify-end mt-10 gap-4">
+          <input type="file" onChange={handleImageUpload} />
+          {uploading && <p>Uploading image...</p>}
+          {uploadError && <p className="text-red-500">{uploadError}</p>}
+          {imageUrl && (
+            <div className="relative">
+              <img src={imageUrl} alt="Uploaded" className="w-full h-auto" />
+              <button
+                onClick={handleRemoveImage}
+                className="absolute top-0 right-0 bg-red-600 text-white p-1 rounded"
+              >
+                Remove
+              </button>
+            </div>
+          )}
+          <div className="flex justify-end gap-4 mt-4">
             <button
               onClick={handleSaveAndClose}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
               Save
             </button>
-            {
-              onDelete && (
-                <button
-                  onClick={handleDelete}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                >
-                  Delete
-                </button>
-              )
-            }
+            {onDelete && (
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              >
+                Delete
+              </button>
+            )}
           </div>
         </div>
       </DialogContent>

@@ -16,15 +16,18 @@ export interface Note {
   content: string;
   createdAt: string;
   userId: string;
+  imageUrl?: string;
 }
 
 const Page = () => {
   const router = useRouter();
   const { user } = useUser();
-  const { notesList, reloadNotesList, deleteNote } = useContext(NotesListContext);
+  const { notesList, reloadNotesList, deleteNote } =
+    useContext(NotesListContext);
 
   const [isOpen, setIsOpen] = useState(false);
   const [editorText, setEditorText] = useState<string>("");
+  const [editorImageUrl, setEditorImageUrl] = useState<string>("");
   const [selectedNotes, setSelectedNotes] = useState<Note[]>([]);
 
   useEffect(() => {
@@ -38,10 +41,12 @@ const Page = () => {
       content: editorText,
       createdAt: new Date().toISOString(),
       userId: user.id,
+      imageUrl: editorImageUrl,
     };
     try {
       await addDoc(collection(db, "notes"), newNote);
       setEditorText("");
+      setEditorImageUrl("");
       await reloadNotesList();
     } catch (error) {
       console.error("Error adding document: ", error);
@@ -59,12 +64,12 @@ const Page = () => {
   };
 
   return (
-    <div>
-      <Navbar deleteSelectedNotes={deleteSelectedNotes} />
+    <div className="flex flex-col items-center justify-center w-full px-4 sm:px-6 lg:px-8">
       <AddButton onClick={() => setIsOpen(true)} />
-      <div className="flex justify-center overflow-x-hidden">
-        <section className="flex min-h-screen flex-col px-6 py-6 max-md:pb-14 sm:px-14">
-          <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-3 xl:columns-4 gap-4 space-y-4">
+      
+      <div className="flex justify-center w-full">
+        <div className="flex flex-col w-full max-w-7xl px-4 py-6">
+          <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
             {notesList.map((note) => (
               <Card
                 key={note.id}
@@ -87,9 +92,11 @@ const Page = () => {
             onClose={() => setIsOpen(false)}
             content={editorText}
             setContent={setEditorText}
+            imageUrl={editorImageUrl}
+            setImageUrl={setEditorImageUrl}
             onSave={addNote}
           />
-        </section>
+        </div>
       </div>
     </div>
   );

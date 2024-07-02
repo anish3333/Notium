@@ -30,7 +30,7 @@ const Card: React.FC<CardProps> = ({ note, onClick, selectNote, unselectNote, se
   
   const isSelected = selectedNotes.some(n => n.id === note.id);
 
-  const handleSelect = (e : React.MouseEvent<HTMLDivElement>) => {
+  const handleSelect = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
     if (isSelected) {
       unselectNote();
@@ -42,27 +42,29 @@ const Card: React.FC<CardProps> = ({ note, onClick, selectNote, unselectNote, se
   return (
     <div
       className={cn(
-        'bg-gray-800 rounded-lg shadow-md p-8 cursor-pointer relative group break-inside-avoid-column',{
-          "border border-white": isSelected
-        } // Added group class here
+        'bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 cursor-pointer relative group break-inside-avoid-column', {
+          "border border-white": isSelected,
+        }
       )}
       onClick={handleClick}
     >
       <div
-        className={cn("absolute top-2 left-2 w-6 h-6 bg-white rounded-full flex items-center justify-center text-black text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200", {
-          "opacity-100":isSelected
-        })}
+        className={cn(
+          "absolute top-2 left-2 w-6 h-6 bg-white rounded-full flex items-center justify-center text-black text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200", {
+            "opacity-100": isSelected,
+          }
+        )}
         onClick={(e) => handleSelect(e)}
       >
         ✓
       </div>
-      <div className="flex flex-col gap-4">
-        <div className="text-sm font-medium text-gray-300 mb-2">
+      <div className="flex flex-col gap-2">
+        <div className="text-xs sm:text-sm font-medium text-gray-300 mb-1">
           {formattedDate}
         </div>
         <div
           dangerouslySetInnerHTML={{ __html: note.content }}
-          className="text-3xl font-semibold text-white max-h-40 overflow-hidden"
+          className="text-base sm:text-lg text-white max-h-40 overflow-hidden"
         />
       </div>
     </div>

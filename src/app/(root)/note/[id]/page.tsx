@@ -2,22 +2,24 @@
 import TextEditor from '@/components/TextEditor';
 import { NotesListContext } from '@/context/NotesListContext';
 import { useParams, useRouter } from 'next/navigation';
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 
 const Page = () => {
   const { id } = useParams();
   const router = useRouter();
-
   const { notesList, reloadNotesList, deleteNote, saveNote } = useContext(NotesListContext);
-  const note = notesList.find((note) => note.id === id);
+  const [note, setNote] = useState(notesList.find((note) => note.id === id));
+  const [content, setContent] = useState(note?.content ?? '');
+  const [imageUrl, setImageUrl] = useState(note?.imageUrl ?? '');
 
-  const setContent = async (content: string) => {
-    if (!note) return;
-    note.content = content;
-  };
+  useEffect(() => {
+    setNote(notesList.find((note) => note.id === id));
+  }, [notesList, id]);
 
   const handleSave = async () => {
     if (!note) return;
+    note.content = content;
+    note.imageUrl = imageUrl;
     await saveNote(note);
   };
 
@@ -31,8 +33,10 @@ const Page = () => {
     <TextEditor
       isOpen={true}
       onClose={() => router.push('/')}
-      content={note?.content ?? ''}
+      content={content}
       setContent={setContent}
+      imageUrl={imageUrl}
+      setImageUrl={setImageUrl}
       onSave={handleSave}
       onDelete={handleDelete}
     />
