@@ -1,10 +1,11 @@
 "use client";
 import { useUser } from "@clerk/nextjs";
-import { createContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useEffect, useState, ReactNode, use } from "react";
 import { db, storage } from "@/firebase/firebaseConfig";
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   query,
   where,
@@ -14,12 +15,23 @@ import {
   arrayUnion,
 } from "firebase/firestore";
 import { Note } from "@/types";
-import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import {
+  getDownloadURL,
+  ref,
+  uploadBytesResumable,
+  deleteObject,
+} from "firebase/storage";
 
 interface NotesListContextValue {
   notesList: Note[];
+  selectedNotes: Note[];
+  pinnedNotes: Note[];
+  setPinnedNotes: (notes: Note[]) => void;
+  setSelectedNotes: (notes: Note[]) => void;
   reloadNotesList: () => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
+  deleteSelectedNotes: () => Promise<void>;
+  pinSelectedNotes: () => Promise<void>;
   saveNote: (note: Note) => Promise<void>;
   addNoteImage: (id: string, imageUrlToAdd: string) => Promise<void>;
   deleteNoteImage: (id: string, imageUrltoDelete: string) => Promise<void>;
@@ -28,17 +40,33 @@ interface NotesListContextValue {
 
 const NotesListContext = createContext<NotesListContextValue>({
   notesList: [],
+  selectedNotes: [],
+  pinnedNotes: [],
+  setPinnedNotes: () => {},
+  setSelectedNotes: () => {},
   reloadNotesList: async () => {},
   deleteNote: async (id) => {},
+  deleteSelectedNotes: async () => {},
+  pinSelectedNotes: async () => {},
   saveNote: async (note) => {},
   addNoteImage: async (id, imageUrlToAdd) => {},
   deleteNoteImage: async (id, imageUrltoDelete) => {},
-  addImageToStorage: async (file) => { return '';},
+  addImageToStorage: async (file) => {
+    return "";
+  },
 });
 
 const NotesListProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useUser();
   const [notesList, setNotesList] = useState<Note[]>([]);
+  const [selectedNotes, setSelectedNotes] = useState<Note[]>(() => {
+    const storedSelectedNotes = localStorage.getItem("selectedNotes");
+    return storedSelectedNotes ? JSON.parse(storedSelectedNotes) : [];
+  });
+  const [pinnedNotes, setPinnedNotes] = useState<Note[]>(() => {
+    const storedPinnedNotes = localStorage.getItem("pinnedNotes");
+    return storedPinnedNotes ? JSON.parse(storedPinnedNotes) : [];
+  });
 
   const fetchNotes = async () => {
     if (!user) return;
@@ -57,14 +85,46 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const deleteNoteImage = async (id: string, imageUrltoDelete: string) => {
+    if (!id) return;
+    const noteRef = doc(db, "notes", id);
+    const imageRef = ref(storage, imageUrltoDelete);
+    try {
+      await deleteObject(imageRef);
+      await updateDoc(noteRef, {
+        imageUrl: arrayRemove(imageUrltoDelete),
+      });
+      fetchNotes();
+    } catch (error) {
+      console.error("Error deleting image: ", error);
+    }
+  };
+
   const deleteNote = async (id: string) => {
     if (!id) return;
     const noteRef = doc(db, "notes", id);
     try {
+      const noteSnapshot = await getDoc(noteRef);
+      if (!noteSnapshot.exists()) return;
+
+      const noteData = noteSnapshot.data() as Note;
+
+      const imageUrlArray = noteData.imageUrl || [];
+      const deleteImagePromises = imageUrlArray.map((imageUrl) =>
+        deleteNoteImage(id, imageUrl)
+      );
+      await Promise.all(deleteImagePromises);
+
       await deleteDoc(noteRef);
+
+      // Update localStorage arrays
+      updateSelectedLocalStorageArray(id);
+      updatePinnedLocalStorageArray(id);
+
+      // Reload notes list
       fetchNotes();
     } catch (error) {
-      console.error("Error deleting document: ", error);
+      console.error("Error deleting document and images: ", error);
     }
   };
 
@@ -83,23 +143,10 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const deleteNoteImage = async (id: string, imageUrltoDelete: string) => {
-    if (!id) return;
-    const noteRef = doc(db, "notes", id);
-    try {
-      await updateDoc(noteRef, {
-        imageUrl: arrayRemove(imageUrltoDelete),
-      });
-      fetchNotes();
-    } catch (error) {
-      console.error("Error updating document: ", error);
-    }
-  };
-
   const addImageToStorage = async (file: File): Promise<string> => {
     const storageRef = ref(storage, `images/${file.name}`);
     const uploadTask = uploadBytesResumable(storageRef, file);
-  
+
     return new Promise((resolve, reject) => {
       uploadTask.on(
         "state_changed",
@@ -119,7 +166,6 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-
   const addNoteImage = async (id: string, imageUrlToAdd: string) => {
     if (!id) return;
     const noteRef = doc(db, "notes", id);
@@ -133,13 +179,90 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const deleteSelectedNotes = async () => {
+    if (!selectedNotes.length) return;
+    try {
+      await Promise.all(
+        selectedNotes.map((note) => {
+          deleteNote(note.id);
+          updatePinnedLocalStorageArray(note.id);
+        })
+      );
+      setSelectedNotes([]);
+      await fetchNotes();
+    } catch (error) {
+      console.error("Error deleting documents: ", error);
+    }
+  };
+
+  const pinSelectedNotes = async () => {
+    if (!selectedNotes.length) return;
+    try {
+      const notesToPin = selectedNotes.filter(
+        (note) => !pinnedNotes.some((pinnedNote) => pinnedNote.id === note.id)
+      );
+
+      localStorage.setItem(
+        "pinnedNotes",
+        JSON.stringify([...pinnedNotes, ...notesToPin])
+      );
+      setPinnedNotes((prev) => [...prev, ...notesToPin]);
+    } catch (error) {
+      console.error("Error pinning documents: ", error);
+    }
+  };
+
+  const updateSelectedLocalStorageArray = (id: string) => {
+    const updatedSelectedNotes = selectedNotes.filter(
+      (note: Note) => note.id !== id
+    );
+
+    setSelectedNotes(updatedSelectedNotes);
+
+    localStorage.setItem("selectedNotes", JSON.stringify(updatedSelectedNotes));
+  };
+
+  const updatePinnedLocalStorageArray = (id: string) => {
+    const updatedPinnedNotes = pinnedNotes.filter(
+      (note: Note) => note.id !== id
+    );
+
+    setPinnedNotes(updatedPinnedNotes);
+
+    localStorage.setItem("pinnedNotes", JSON.stringify(updatedPinnedNotes));
+  };
+
   useEffect(() => {
     fetchNotes();
   }, [user]);
 
+  useEffect(() => {
+    localStorage.setItem("selectedNotes", JSON.stringify(selectedNotes));
+    setSelectedNotes(selectedNotes);
+  }, [selectedNotes]);
+
+  useEffect(() => {
+    localStorage.setItem("pinnedNotes", JSON.stringify(pinnedNotes));
+    setPinnedNotes(pinnedNotes);
+  }, [pinnedNotes]);
+
   return (
     <NotesListContext.Provider
-      value={{ notesList, reloadNotesList: fetchNotes, deleteNote, saveNote, addNoteImage, deleteNoteImage, addImageToStorage }}
+      value={{
+        notesList,
+        pinnedNotes,
+        setPinnedNotes,
+        selectedNotes,
+        setSelectedNotes,
+        reloadNotesList: fetchNotes,
+        deleteNote,
+        deleteSelectedNotes,
+        pinSelectedNotes,
+        saveNote,
+        addNoteImage,
+        deleteNoteImage,
+        addImageToStorage,
+      }}
     >
       {children}
     </NotesListContext.Provider>

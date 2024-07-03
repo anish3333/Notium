@@ -18,7 +18,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { PublicUserData } from "@clerk/types";
 import { User } from "@clerk/clerk-sdk-node";
 
 export default function ComboboxDemo() {
@@ -77,7 +76,7 @@ export default function ComboboxDemo() {
                   />
                   {user.firstName}
                 </CommandItem>
-              ))}npm install @clerk/types
+              ))}
             </CommandGroup>
           </CommandList>
         </Command>

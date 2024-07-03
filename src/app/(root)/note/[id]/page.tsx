@@ -23,6 +23,7 @@ const Page = () => {
     if (!note) return;
     note.content = content;
     await saveNote(note);
+    router.push(`/`);
   };
 
   const handleDelete = async () => {
@@ -48,11 +49,7 @@ const Page = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      <header className="bg-gray-800 shadow p-4">
-        <div className="container mx-auto flex justify-between items-center">
-          <button onClick={() => router.push('/')} className="text-blue-400 hover:underline">Back to Notes</button>
-        </div>
-      </header>
+      
       <main className="container mx-auto p-4">
         <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
           <div className="mb-4">

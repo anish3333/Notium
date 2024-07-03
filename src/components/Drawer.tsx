@@ -5,7 +5,6 @@ import React from 'react';
 import { Home, LineChart, Package, Package2, Settings, ShoppingCart, Users2, Menu, NotebookTabsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { SidebarLink } from '@/types';
 
 export const sidebarLinks = [
   {
@@ -31,6 +30,7 @@ const Drawer = () => {
         <nav className="grid gap-6 text-lg font-medium">
           {sidebarLinks.map((link, index) => (
             <Link
+            key={index}
             href={link.href}
             className={`flex rounded-lg ${link.colorClass} transition-colors md:h-8 md:w-8 ${link.bgColorClass}`} 
            >
