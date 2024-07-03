@@ -1,4 +1,3 @@
-import Drawer from '@/components/Drawer'
 import Navbar from '@/components/Navbar'
 import Sidebar from '@/components/Sidebar'
 import React from 'react'
@@ -9,9 +8,9 @@ const layout = ({ children }: { children: React.ReactNode }) => {
       <div>
         <Sidebar />
       </div>
-      <div className="flex-1 ">
+      <div className="flex-1 sm:pl-[4rem]">
         <Navbar />
-        <main className='sm:pl-[4rem] w-full'>{children}</main>
+        <main className='w-full'>{children}</main>
       </div>
     </div>
   )

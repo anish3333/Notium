@@ -42,30 +42,32 @@ const Card: React.FC<CardProps> = ({ note, onClick, selectNote, unselectNote, se
   return (
     <div
       className={cn(
-        'bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 cursor-pointer  group break-inside-avoid-column', {
+        'bg-gray-800 rounded-lg shadow-md p-3 sm:p-4 cursor-pointer group break-inside-avoid-column', {
           "border border-white": isSelected,
         }
       )}
       onClick={handleClick}
     >
-      <div
-        className={cn(
-          "absolute top-2 left-2 w-6 h-6 bg-white rounded-full flex items-center justify-center text-black text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200", {
-            "opacity-100": isSelected,
-          }
-        )}
-        onClick={(e) => handleSelect(e)}
-      >
-        ✓
-      </div>
-      <div className="flex flex-col gap-2">
-        <div className="text-xs sm:text-sm font-medium text-gray-300 mb-1">
-          {formattedDate}
+      <div className="flex justify-between items-start">
+        <div className="flex flex-col gap-2">
+          <div className="text-xs sm:text-sm font-medium text-gray-300 mb-1">
+            {formattedDate}
+          </div>
+          <div className="text-base sm:text-lg text-white max-h-40 overflow-hidden">
+            {note.content}
+          </div>
         </div>
         <div
-          dangerouslySetInnerHTML={{ __html: note.content }}
-          className="text-base sm:text-lg text-white max-h-40 overflow-hidden"
-        />
+          className={cn(
+            "w-6 h-6 bg-white rounded-full flex items-center justify-center text-black text-xs font-bold transition-opacity duration-200", {
+              "opacity-100": isSelected,
+              "opacity-0 group-hover:opacity-100": !isSelected,
+            }
+          )}
+          onClick={(e) => handleSelect(e)}
+        >
+          ✓
+        </div>
       </div>
     </div>
   );

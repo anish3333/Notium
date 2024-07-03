@@ -29,7 +29,9 @@ const Page = () => {
 
   return (
     <div className="flex flex-col h-screen  w-full px-4 sm:px-6 lg:px-8">
-      <AddNote />
+      <div className="hidden max-sm:flex justify-center">
+        <AddNote />
+      </div>
       <div className="flex justify-center w-full">
         <div className="flex flex-col w-full max-w-7xl px-4 py-6">
           <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">

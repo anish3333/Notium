@@ -1,14 +1,14 @@
 "use client";
+import { CirclePlus } from "lucide-react";
 import React from "react";
 
 const AddButton = ({ onClick }: { onClick: () => void }) => {
   return (
-    <button
+    <CirclePlus
+      className="max-sm:fixed max-sm:bottom-0 max-sm:right-0
+      max-sm:m-5 max-sm:text-white h-9 w-9 flex justify-center items-center text-black cursor-pointer rounded-full"
       onClick={onClick}
-      className="fixed bg-yellow-400 w-12 h-12 rounded-full text-xl p-2 bottom-0 right-0 m-9"
-    >
-      +
-    </button>
+    />
   );
 };
 

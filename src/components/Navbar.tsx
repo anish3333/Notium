@@ -7,10 +7,9 @@ const Navbar = () => {
   // const {user} = useContext(UserContext);
   // console.log(user);
   return (
-    <div className="flex justify-between w-full m-1 z-10">
-      <div className="flex text-white items-center gap-2 text-xl font-bold">
+    <div className="sm:hidden flex justify-between w-full p-4 z-10 mr-[4rem]">
+      <div className="flex text-slate-300 items-center gap-2 text-xl font-bold">
         <Drawer />
-        Logo
       </div>
       <div className="flex items-center gap-2">
         {/* <div className="flex items-center gap-2">
