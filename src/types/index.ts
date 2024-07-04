@@ -1,3 +1,4 @@
+import { UserPreviewId } from "@clerk/types";
 import { LucideIcon } from "lucide-react";
 
 export interface Note {
@@ -15,4 +16,9 @@ export interface SidebarLink {
   href: string;
   colorClass: string;
   bgColorClass: string; 
+}
+
+export interface Collaboration {
+  author: string;
+  collaborators: string[];
 }

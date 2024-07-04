@@ -21,15 +21,6 @@ const Page = () => {
     reloadNotesList();
   }, [user]);
 
-  // useEffect(() => {
-  //   localStorage.setItem("pinnedNotes", JSON.stringify(pinnedNotes));
-  //   setPinnedNotes(pinnedNotes);
-  // }, [pinnedNotes]);
-
-  // useEffect(() => {
-  //   localStorage.setItem("selectedNotes", JSON.stringify(selectedNotes));
-  //   setSelectedNotes(selectedNotes);
-  // }, [selectedNotes]);
 
   const handleSelectNote = (note: Note) => {
     const isSelected = selectedNotes.some((n) => n.id === note.id);
