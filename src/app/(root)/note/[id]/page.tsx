@@ -1,11 +1,14 @@
 'use client';
+import CollaboratorsList from '@/components/CollaboratorsList';
 import OtherUsersBox from '@/components/OtherUsersBox';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/use-toast';
 import { NotesListContext } from '@/context/NotesListContext';
 import { db } from '@/firebase/firebaseConfig';
 import { Collaboration } from '@/types';
 import { User } from '@clerk/clerk-sdk-node';
 import { useUser } from '@clerk/nextjs';
-import { arrayUnion, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { arrayRemove, arrayUnion, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
@@ -21,6 +24,7 @@ const Page = () => {
   const [userToCollaborate, setUserToCollaborate] = useState<User | null>(null);
   const [collaboration, setCollaboration] = useState<Collaboration | null>(null);
   const [users, setUsers] = useState<User[]>([]);
+  const [openCollaboratorsList, setOpenCollaboratorsList] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     if (!isSignedIn) return;
@@ -65,10 +69,10 @@ const Page = () => {
     if (collabDocSnapshot.exists()) {
       const collabData = collabDocSnapshot.data() as Collaboration;
       setCollaboration(collabData);
-      // Remove existing collaborators from the users list
       setUsers(prevUsers => prevUsers.filter(user => !collabData.collaborators.includes(user.id)));
     }
   }, [note]);
+
 
   const handleCollaborate = useCallback(async () => {
     if (!note || !userToCollaborate) return;
@@ -87,12 +91,31 @@ const Page = () => {
       });
     }
 
-    setUsers(prevUsers => prevUsers.filter(u => u.id !== userToCollaborate.id));
+    toast({
+      title: `${userToCollaborate.username} is a collaborator`,
+    })
+
+    setUsers(prevUsers => prevUsers.filter(u => u.id !== userToCollaborate.id)); // remove 
     setUserToCollaborate(null);
     fetchCollaboration();
   }, [note, userToCollaborate, fetchCollaboration]);
 
-  
+
+
+  const removeCollaborator = async (userId: string) => {
+    if (!note) return;
+
+    const collabDocRef = doc(db, 'collaborations', note.id);
+    const collabDocSnapshot = await getDoc(collabDocRef);
+
+    if (collabDocSnapshot.exists()) {
+      await updateDoc(collabDocRef, {
+        collaborators: arrayRemove(userId),
+      });
+    } 
+    fetchUsers();
+    fetchCollaboration();
+  };
 
   useEffect(() => {
     if (userToCollaborate) {
@@ -120,6 +143,7 @@ const Page = () => {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   return (
+    <>
     <div className="min-h-screen bg-gray-900 text-white">
       <main className="container mx-auto p-4">
         <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
@@ -154,13 +178,23 @@ const Page = () => {
             />
           </div>
           <div className="flex justify-end space-x-4">
+            <Button onClick={() => setOpenCollaboratorsList(true)}>Collaborators</Button>
             <OtherUsersBox users={users} value={userToCollaborate} setValue={setUserToCollaborate} />
             <button onClick={handleDelete} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">Delete</button>
             <button onClick={handleSave} className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Save</button>
           </div>
         </div>
+    <CollaboratorsList
+      open={openCollaboratorsList}
+      handleClose={() => setOpenCollaboratorsList(false)} 
+      collaborators={collaboration?.collaborators}
+      removeCollaborator={removeCollaborator}
+    />
       </main>
     </div>
+
+
+    </>
   );
 };
 

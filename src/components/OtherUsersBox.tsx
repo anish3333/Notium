@@ -35,7 +35,7 @@ export default function OtherUsersBox({value, setValue, users}: {value: User | n
         >
           {value
             ? users.find((user) => user.username === value.username)?.username
-            : "Select user..."}
+            : "Add Collaborator..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
