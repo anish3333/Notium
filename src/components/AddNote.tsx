@@ -25,15 +25,13 @@ const AddNote: React.FC = () => {
       createdAt: new Date().toISOString(),
       userId: user.id,
       imageUrl,
+      orgId: pathName.includes("organisation") ? pathName.split("/")[2] : null,
     };
     try {
       const newNoteRef = await addDoc(collection(db, "notes"), newNote);
 
-      if (pathName.split("/")[1] === "organisation") {
-        const orgId = pathName.split("/")[2];
-        console.log(pathName);
-        console.log(orgId, newNoteRef.id);
-        await addNoteToOrganization(orgId, newNoteRef.id);
+      if (newNote.orgId) {
+        await addNoteToOrganization(newNote.orgId, newNoteRef.id);
       }
 
       await reloadNotesList();

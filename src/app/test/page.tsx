@@ -11,7 +11,7 @@ import React, { use, useEffect } from 'react'
 
 const page = () => {
   const {user} = useUser();
-  console.log(user);
+  // console.log(user);
   return (
     <div>
       <OrgForm />

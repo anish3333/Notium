@@ -38,7 +38,7 @@ interface OrganizationContextValue {
   currentOrganization: Organization | undefined;
   organizations: Organization[];
   joinRequests: JoinRequest[];
-  addOrganization: (name: string, members: string[]) => Promise<void>;
+  addOrganization: (name: string, members?: string[]) => Promise<void>;
   requestJoinOrganization: (orgId: string) => Promise<void>;
   approveJoinRequest: (requestId: string) => Promise<void>;
   rejectJoinRequest: (requestId: string) => Promise<void>;
@@ -94,17 +94,16 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     try {
       const filteredOrgs = organizations.filter(
         (org) => org.author === user.id
-      );
+      ); // organizations that the user is the author of
+
       const requestCollection = collection(db, "joinRequests");
       const requestQuery = query(
         requestCollection,
-        where(
-          "orgId",
-          "in",
-          filteredOrgs.map((org) => org.id)
-        )
+        where("orgId","in",filteredOrgs.map((org) => org.id)),
+        where("status","==","pending")
       );
       const requestSnapshot = await getDocs(requestQuery);
+
       const requestList = requestSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
@@ -116,13 +115,14 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const addOrganization = async (name: string, members: string[]) => {
+  const addOrganization = async (name: string, members ?: string[]) => {
     if (!user) return;
+    console.log(name, members);
     try {
       await addDoc(collection(db, "organizations"), {
         name,
         author: user.id,
-        members: [user.id, ...members],
+        members: members ? [user.id, ...members] : [user.id],
         notes: [],
       });
       fetchOrganizations();
@@ -134,12 +134,18 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
   const requestJoinOrganization = async (orgId: string) => {
     if (!user) return;
     try {
+      const org = await getDoc(doc(db, "organizations", orgId));
+      if (!org.exists()) return;
+      console.log(org.data());
+      if(org.data().members.includes(user.id))return;
+      
       await addDoc(collection(db, "joinRequests"), {
         orgId,
         userId: user.id,
         status: "pending",
       });
       fetchJoinRequests();
+      
     } catch (error) {
       console.error("Error requesting to join organization:", error);
     }

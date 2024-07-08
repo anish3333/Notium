@@ -37,6 +37,8 @@ const TextEditor: React.FC<TextEditorProps> = ({ isOpen, onClose, onSave }) => {
         imageFiles.map((file) => addImageToStorage(file))
       );
       await onSave(content, uploadedUrls);
+      setImageFiles([]);
+      setImageUrl([]);
       setContent("");
       setUploading(false);
       onClose();

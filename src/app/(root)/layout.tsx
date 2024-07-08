@@ -7,11 +7,9 @@ import { useEffect } from "react";
 import { db } from "@/firebase/firebaseConfig";
 import { addDoc, collection, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore";
 import { useUser } from '@clerk/nextjs';
-import OrganizationProvider from '@/context/OrganisationContext';
 
 const layout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <OrganizationProvider>
       <SyncUserWithFirebase>
       <div className="flex w-full overflow-x-hidden">
         <div>
@@ -23,7 +21,6 @@ const layout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
       </SyncUserWithFirebase>
-    </OrganizationProvider>
   )
 }
 

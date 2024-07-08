@@ -6,6 +6,7 @@ import { ClerkProvider, useUser } from "@clerk/nextjs";
 import UserProvider from "@/context/UserContext";
 import NotesListProvider from "@/context/NotesListContext";
 import { Toaster } from "@/components/ui/toaster";
+import OrganizationProvider from "@/context/OrganisationContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -37,8 +38,10 @@ export default function RootLayout({
         <html lang="en">
           <body className={`${inter.className} bg-slate-950`}>
             <NotesListProvider>
+              <OrganizationProvider>
                 {children}
                 <Toaster />
+              </OrganizationProvider>
             </NotesListProvider>
           </body>
         </html>

@@ -179,7 +179,7 @@ const Page = () => {
           </div>
           <div className="flex justify-end space-x-4">
             <Button onClick={() => setOpenCollaboratorsList(true)}>Collaborators</Button>
-            <OtherUsersBox users={users} value={userToCollaborate} setValue={setUserToCollaborate} />
+            <OtherUsersBox users={users} value={userToCollaborate} setValue={setUserToCollaborate} placeholder="Choose collaborators" />
             <button onClick={handleDelete} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">Delete</button>
             <button onClick={handleSave} className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Save</button>
           </div>
