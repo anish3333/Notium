@@ -12,9 +12,11 @@ import {
   updateDoc,
   arrayUnion,
   addDoc,
-  DocumentData,
   deleteDoc,
 } from "firebase/firestore";
+import { usePathname } from "next/navigation";
+import { fetchOrganizationNotes } from "@/lib/orgUtils";
+import { Note } from "@/types";
 
 interface Organization {
   id: string;
@@ -32,9 +34,11 @@ interface JoinRequest {
 }
 
 interface OrganizationContextValue {
+  orgNotes: Note[];
+  currentOrganization: Organization | undefined;
   organizations: Organization[];
   joinRequests: JoinRequest[];
-  addOrganization: (name: string) => Promise<void>;
+  addOrganization: (name: string, members: string[]) => Promise<void>;
   requestJoinOrganization: (orgId: string) => Promise<void>;
   approveJoinRequest: (requestId: string) => Promise<void>;
   rejectJoinRequest: (requestId: string) => Promise<void>;
@@ -44,6 +48,8 @@ interface OrganizationContextValue {
 }
 
 const OrganizationContext = createContext<OrganizationContextValue>({
+  orgNotes: [],
+  currentOrganization: undefined,
   organizations: [],
   joinRequests: [],
   addOrganization: async () => {},
@@ -59,6 +65,9 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useUser();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
+  const [currentOrganization, setCurrentOrganization] = useState<Organization>();
+  const [notes, setNotes] = useState<Note[]>([]);
+  const pathName = usePathname();
 
   const fetchOrganizations = async () => {
     if (!user) return;
@@ -107,13 +116,13 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const addOrganization = async (name: string) => {
+  const addOrganization = async (name: string, members: string[]) => {
     if (!user) return;
     try {
       await addDoc(collection(db, "organizations"), {
         name,
         author: user.id,
-        members: [user.id],
+        members: [user.id, ...members],
         notes: [],
       });
       fetchOrganizations();
@@ -180,9 +189,26 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
       await updateDoc(orgRef, {
         notes: arrayUnion(noteId),
       });
-      fetchOrganizations();
+      setCurrentOrganization(organizations.find((org) => org.id === orgId));
+      getCurrentOrganizationNotes(orgId);
     } catch (error) {
       console.error("Error adding note to organization:", error);
+    }
+  };
+
+  const getCurrentOrganizationNotes = async (orgId: string) => {
+    if (!user) return;
+    if (!orgId) return;
+    const notes = await fetchOrganizationNotes(orgId, user);
+    setNotes(notes);
+  };
+
+  const updateCurrentOrganization = () => {
+    if (!user) return;
+    if (pathName.includes("organisation")) {
+      const orgId = pathName.split("/")[2];
+      setCurrentOrganization(organizations.find((org) => org.id === orgId));
+      getCurrentOrganizationNotes(orgId);
     }
   };
 
@@ -196,9 +222,15 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [organizations]);
 
+  useEffect(() => {
+    updateCurrentOrganization();
+  }, [pathName, organizations]);
+
   return (
     <OrganizationContext.Provider
       value={{
+        orgNotes: notes,
+        currentOrganization,
         organizations,
         joinRequests,
         addOrganization,

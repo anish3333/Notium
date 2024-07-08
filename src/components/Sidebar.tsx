@@ -33,6 +33,10 @@ const Sidebar = () => {
   const {selectedNotes} = useContext(NotesListContext); 
   const [hasSelectedNotes, setHasSelectedNotes] = useState(false);
 
+  const handleDeleteSelectedNotes = async () => {
+    await deleteSelectedNotes();
+  };
+
   useEffect(() => {
     setHasSelectedNotes(selectedNotes.length > 0);
   }, [selectedNotes]);
@@ -71,7 +75,7 @@ const Sidebar = () => {
                 <TooltipTrigger asChild>
                   <button
                     className="flex h-9 w-9 items-center justify-center rounded-lg text-white bg-red-500 transition-colors hover:text-foreground md:h-8 md:w-8"
-                    onClick={deleteSelectedNotes}
+                    onClick={handleDeleteSelectedNotes}
                   >
                     <Trash2 className="h-5 w-5" />
                   </button>

@@ -1,6 +1,6 @@
 "use client";
 import { useUser } from "@clerk/nextjs";
-import { createContext, useEffect, useState, ReactNode, use } from "react";
+import { createContext, useEffect, useState, ReactNode } from "react";
 import { db, storage } from "@/firebase/firebaseConfig";
 import {
   collection,
@@ -118,8 +118,8 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
       await deleteDoc(noteRef);
 
       // Update localStorage arrays
-      updateSelectedLocalStorageArray(id);
-      updatePinnedLocalStorageArray(id);
+      // updateSelectedLocalStorageArray(id);
+      // updatePinnedLocalStorageArray(id);
 
       // Reload notes list
       fetchNotes();
@@ -182,13 +182,19 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
   const deleteSelectedNotes = async () => {
     if (!selectedNotes.length) return;
     try {
-      await Promise.all(
-        selectedNotes.map((note) => {
-          deleteNote(note.id);
-          updatePinnedLocalStorageArray(note.id);
-        })
+      const selectedIds = selectedNotes.map((note) => note.id);
+
+      await Promise.all(selectedNotes.map((note) => deleteNote(note.id)));
+
+      const updatedPinnedNotes = pinnedNotes.filter(
+        (note) => !selectedIds.includes(note.id)
       );
+
+      setPinnedNotes(updatedPinnedNotes);
+      localStorage.setItem("pinnedNotes", JSON.stringify(updatedPinnedNotes));
+
       setSelectedNotes([]);
+      localStorage.setItem("selectedNotes", JSON.stringify([]));
       await fetchNotes();
     } catch (error) {
       console.error("Error deleting documents: ", error);
@@ -202,35 +208,37 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
         (note) => !pinnedNotes.some((pinnedNote) => pinnedNote.id === note.id)
       );
 
-      localStorage.setItem(
-        "pinnedNotes",
-        JSON.stringify([...pinnedNotes, ...notesToPin])
-      );
-      setPinnedNotes((prev) => [...prev, ...notesToPin]);
+      const updatedPinnedNotes = [...pinnedNotes, ...notesToPin];
+      setPinnedNotes(updatedPinnedNotes);
+      localStorage.setItem("pinnedNotes", JSON.stringify(updatedPinnedNotes));
+
+      // Optionally, clear selected notes after pinning
+      // setSelectedNotes([]);
+      // localStorage.setItem("selectedNotes", JSON.stringify([]));
     } catch (error) {
       console.error("Error pinning documents: ", error);
     }
   };
 
-  const updateSelectedLocalStorageArray = (id: string) => {
-    const updatedSelectedNotes = selectedNotes.filter(
-      (note: Note) => note.id !== id
-    );
+  // const updateSelectedLocalStorageArray = (id: string) => {
+  //   const updatedSelectedNotes = selectedNotes.filter(
+  //     (note: Note) => note.id !== id
+  //   );
 
-    setSelectedNotes(updatedSelectedNotes);
+  //   setSelectedNotes(updatedSelectedNotes);
 
-    localStorage.setItem("selectedNotes", JSON.stringify(updatedSelectedNotes));
-  };
+  //   localStorage.setItem("selectedNotes", JSON.stringify(updatedSelectedNotes));
+  // };
 
-  const updatePinnedLocalStorageArray = (id: string) => {
-    const updatedPinnedNotes = pinnedNotes.filter(
-      (note: Note) => note.id !== id
-    );
+  // const updatePinnedLocalStorageArray = (id: string) => {
+  //   const updatedPinnedNotes = pinnedNotes.filter(
+  //     (note: Note) => note.id !== id
+  //   );
 
-    setPinnedNotes(updatedPinnedNotes);
+  //   setPinnedNotes(updatedPinnedNotes);
 
-    localStorage.setItem("pinnedNotes", JSON.stringify(updatedPinnedNotes));
-  };
+  //   localStorage.setItem("pinnedNotes", JSON.stringify(updatedPinnedNotes));
+  // };
 
   useEffect(() => {
     fetchNotes();
