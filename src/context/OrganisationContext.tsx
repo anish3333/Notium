@@ -13,10 +13,13 @@ import {
   arrayUnion,
   addDoc,
   deleteDoc,
+  arrayRemove,
 } from "firebase/firestore";
 import { usePathname } from "next/navigation";
 import { fetchOrganizationNotes } from "@/lib/orgUtils";
 import { Note } from "@/types";
+import { toast } from "@/components/ui/use-toast";
+import { User } from "@clerk/clerk-sdk-node";
 
 interface Organization {
   id: string;
@@ -29,8 +32,8 @@ interface Organization {
 interface JoinRequest {
   id: string;
   orgId: string;
-  userId: string;
   status: string;
+  user: User
 }
 
 interface OrganizationContextValue {
@@ -91,24 +94,31 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchJoinRequests = async () => {
     if (!user) return;
+  
     try {
-      const filteredOrgs = organizations.filter(
-        (org) => org.author === user.id
-      ); // organizations that the user is the author of
-
+      const filteredOrgs = organizations.filter((org) => org.author === user.id);
+      
       const requestCollection = collection(db, "joinRequests");
       const requestQuery = query(
         requestCollection,
-        where("orgId","in",filteredOrgs.map((org) => org.id)),
-        where("status","==","pending")
+        where("orgId", "in", filteredOrgs.map((org) => org.id))
       );
+      
       const requestSnapshot = await getDocs(requestQuery);
-
-      const requestList = requestSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as JoinRequest[];
-
+      
+      const requestList = await Promise.all(
+        requestSnapshot.docs.map(async (doc) => {
+          const userData = await fetch(`/api/getUserByid/${doc.data().userId}`).then(res => res.json());
+          
+          return {
+            id: doc.id,
+            orgId: doc.data().orgId,
+            status: doc.data().status,
+            user: userData
+          } as JoinRequest;
+        })
+      );
+  
       setJoinRequests(requestList);
     } catch (error) {
       console.error("Error fetching join requests:", error);
@@ -135,17 +145,50 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return;
     try {
       const org = await getDoc(doc(db, "organizations", orgId));
-      if (!org.exists()) return;
-      console.log(org.data());
-      if(org.data().members.includes(user.id))return;
-      
-      await addDoc(collection(db, "joinRequests"), {
-        orgId,
-        userId: user.id,
-        status: "pending",
-      });
-      fetchJoinRequests();
-      
+      if (!org.exists()){
+        toast({
+          variant: "destructive",
+          title: "Organization not found",
+        });
+        return;
+      }
+      // console.log(org.data());
+      if(org.data().members.includes(user.id)){
+        toast({
+          variant: "destructive",
+          title: "You are already a member of this organization",
+        });
+        return;
+      };
+
+      const requestRef = collection(db, "joinRequests");
+      const requestQuery = query(requestRef,
+        where("orgId","==",orgId),
+        where("userId","==",user.id),
+        where("status","==","pending")
+      );
+
+      const requestSnapshot = await getDocs(requestQuery);
+      if(requestSnapshot.empty){
+        await addDoc(requestRef, {
+          orgId,
+          userId: user.id,
+          status: "pending",
+        });
+        toast({
+          title: "Request to join organization sent",
+        });
+        fetchJoinRequests();
+        return;
+      }
+      else{
+        toast({
+          variant: "destructive",
+          title: "You already have a pending request to join this organization",
+        });
+        return;
+      }
+    
     } catch (error) {
       console.error("Error requesting to join organization:", error);
     }
@@ -156,11 +199,11 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     try {
       const requestRef = doc(db, "joinRequests", requestId);
       const requestSnapshot = await getDoc(requestRef);
-      const requestData = requestSnapshot.data() as JoinRequest;
+      const requestData = requestSnapshot.data();
 
-      const orgRef = doc(db, "organizations", requestData.orgId);
+      const orgRef = doc(db, "organizations", requestData?.orgId);
       await updateDoc(orgRef, {
-        members: arrayUnion(requestData.userId),
+        members: arrayUnion(requestData?.userId),
       });
 
       await updateDoc(requestRef, {
@@ -218,6 +261,23 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+
+  const removeMemberFromOrganization = async (orgId: string, userId: string) => {
+    if (!user) return;
+    try {
+      const orgRef = doc(db, "organizations", orgId);
+      
+      await updateDoc(orgRef, {
+        members: arrayRemove(userId),
+      });
+      toast({
+        title: "Member removed from organization",
+      }); 
+      fetchOrganizations();
+    } catch (error) {
+      console.error("Error removing member from organization:", error);
+    }
+  };
   useEffect(() => {
     fetchOrganizations();
   }, [user]);

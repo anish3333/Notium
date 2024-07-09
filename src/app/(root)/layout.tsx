@@ -23,6 +23,7 @@ const layout = ({ children }: { children: React.ReactNode }) => {
       </SyncUserWithFirebase>
   )
 }
+export default layout
 
 const SyncUserWithFirebase = ({ children }: { children: React.ReactNode }) => {
   const { user } = useUser();
@@ -53,5 +54,3 @@ const SyncUserWithFirebase = ({ children }: { children: React.ReactNode }) => {
 
   return <>{children}</>;
 };
-
-export default layout
