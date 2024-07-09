@@ -15,7 +15,7 @@ const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) => {
 
   React.useEffect(() => {
     if (!user) {
-      router.push(`/organisation/join/${id}`);
+      router.push(`/organisation`);
     }
   }, [user, router, id]);
 

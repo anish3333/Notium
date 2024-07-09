@@ -1,6 +1,6 @@
 "use client";
 import { useUser } from "@clerk/nextjs";
-import { createContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useEffect, useState, ReactNode, useContext } from "react";
 import { db, storage } from "@/firebase/firebaseConfig";
 import {
   collection,
@@ -21,6 +21,8 @@ import {
   uploadBytesResumable,
   deleteObject,
 } from "firebase/storage";
+import { toast } from "@/components/ui/use-toast";
+import { OrganizationContext } from "./OrganisationContext";
 
 interface NotesListContextValue {
   notesList: Note[];
@@ -57,6 +59,7 @@ const NotesListContext = createContext<NotesListContextValue>({
 });
 
 const NotesListProvider = ({ children }: { children: ReactNode }) => {
+
   const { user } = useUser();
   const [notesList, setNotesList] = useState<Note[]>([]);
   const [selectedNotes, setSelectedNotes] = useState<Note[]>(() => {
@@ -67,6 +70,8 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
     const storedPinnedNotes = localStorage.getItem("pinnedNotes");
     return storedPinnedNotes ? JSON.parse(storedPinnedNotes) : [];
   });
+
+  const { deleteNoteFromOrganization } = useContext(OrganizationContext);
 
   const fetchNotes = async () => {
     if (!user) return;
@@ -115,6 +120,15 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
       );
       await Promise.all(deleteImagePromises);
 
+      if(noteData.orgId !== undefined && noteData.orgId.length > 0){
+        console.log("Deleting note from organization", noteData.orgId);
+        await deleteNoteFromOrganization(noteData.orgId, id);
+        toast({
+          variant: "destructive",
+          title: "Note deleted from organization",
+        }); 
+      }
+
       await deleteDoc(noteRef);
 
       // Update localStorage arrays
@@ -127,6 +141,8 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
       console.error("Error deleting document and images: ", error);
     }
   };
+
+  
 
   const saveNote = async (note: Note) => {
     if (!note) return;
@@ -220,6 +236,7 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  
   // const updateSelectedLocalStorageArray = (id: string) => {
   //   const updatedSelectedNotes = selectedNotes.filter(
   //     (note: Note) => note.id !== id

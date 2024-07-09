@@ -20,6 +20,7 @@ import { fetchOrganizationNotes } from "@/lib/orgUtils";
 import { Note } from "@/types";
 import { toast } from "@/components/ui/use-toast";
 import { User } from "@clerk/clerk-sdk-node";
+import { get } from "http";
 
 interface Organization {
   id: string;
@@ -33,11 +34,24 @@ interface JoinRequest {
   id: string;
   orgId: string;
   status: string;
-  user: User
+  user: User;
+}
+
+interface joinRequestDoc {
+  orgId: string;
+  userId: string;
+  status: string;
+}
+
+enum JoinRequestStatus {
+  pending = "pending",
+  approved = "approved",
+  rejected = "rejected",
 }
 
 interface OrganizationContextValue {
   orgNotes: Note[];
+  members: User[];
   currentOrganization: Organization | undefined;
   organizations: Organization[];
   joinRequests: JoinRequest[];
@@ -48,10 +62,17 @@ interface OrganizationContextValue {
   addNoteToOrganization: (orgId: string, noteId: string) => Promise<void>;
   reloadOrganizations: () => Promise<void>;
   reloadJoinRequests: () => Promise<void>;
+  removeMemberFromOrganization: (
+    orgId: string,
+    userId: string
+  ) => Promise<void>;
+  deleteNoteFromOrganization: (orgId: string, noteId: string) => Promise<void>;
+  fetchOrganizationMembers: (orgId: string) => Promise<void>;
 }
 
 const OrganizationContext = createContext<OrganizationContextValue>({
   orgNotes: [],
+  members: [],
   currentOrganization: undefined,
   organizations: [],
   joinRequests: [],
@@ -62,14 +83,19 @@ const OrganizationContext = createContext<OrganizationContextValue>({
   addNoteToOrganization: async () => {},
   reloadOrganizations: async () => {},
   reloadJoinRequests: async () => {},
+  removeMemberFromOrganization: async () => {},
+  deleteNoteFromOrganization: async () => {},
+  fetchOrganizationMembers: async () => {},
 });
 
 const OrganizationProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useUser();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
-  const [currentOrganization, setCurrentOrganization] = useState<Organization>();
+  const [currentOrganization, setCurrentOrganization] =
+    useState<Organization>();
   const [notes, setNotes] = useState<Note[]>([]);
+  const [members, setMembers] = useState<User[]>([]);
   const pathName = usePathname();
 
   const fetchOrganizations = async () => {
@@ -94,38 +120,46 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchJoinRequests = async () => {
     if (!user) return;
-  
+
     try {
-      const filteredOrgs = organizations.filter((org) => org.author === user.id);
-      
+      const filteredOrgs = organizations.filter(
+        (org) => org.author === user.id
+      );
+
       const requestCollection = collection(db, "joinRequests");
       const requestQuery = query(
         requestCollection,
-        where("orgId", "in", filteredOrgs.map((org) => org.id))
+        where(
+          "orgId",
+          "in",
+          filteredOrgs.map((org) => org.id)
+        )
       );
-      
+
       const requestSnapshot = await getDocs(requestQuery);
-      
+
       const requestList = await Promise.all(
         requestSnapshot.docs.map(async (doc) => {
-          const userData = await fetch(`/api/getUserByid/${doc.data().userId}`).then(res => res.json());
-          
+          const userData = await fetch(
+            `/api/getUserByid/${doc.data().userId}`
+          ).then((res) => res.json());
+
           return {
             id: doc.id,
             orgId: doc.data().orgId,
             status: doc.data().status,
-            user: userData
+            user: userData,
           } as JoinRequest;
         })
       );
-  
+
       setJoinRequests(requestList);
     } catch (error) {
       console.error("Error fetching join requests:", error);
     }
   };
 
-  const addOrganization = async (name: string, members ?: string[]) => {
+  const addOrganization = async (name: string, members?: string[]) => {
     if (!user) return;
     console.log(name, members);
     try {
@@ -145,7 +179,7 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return;
     try {
       const org = await getDoc(doc(db, "organizations", orgId));
-      if (!org.exists()){
+      if (!org.exists()) {
         toast({
           variant: "destructive",
           title: "Organization not found",
@@ -153,23 +187,24 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       // console.log(org.data());
-      if(org.data().members.includes(user.id)){
+      if (org.data().members.includes(user.id)) {
         toast({
           variant: "destructive",
           title: "You are already a member of this organization",
         });
         return;
-      };
+      }
 
       const requestRef = collection(db, "joinRequests");
-      const requestQuery = query(requestRef,
-        where("orgId","==",orgId),
-        where("userId","==",user.id),
-        where("status","==","pending")
+      const requestQuery = query(
+        requestRef,
+        where("orgId", "==", orgId),
+        where("userId", "==", user.id),
+        where("status", "==", JoinRequestStatus.pending)
       );
 
       const requestSnapshot = await getDocs(requestQuery);
-      if(requestSnapshot.empty){
+      if (requestSnapshot.empty) {
         await addDoc(requestRef, {
           orgId,
           userId: user.id,
@@ -180,15 +215,13 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         });
         fetchJoinRequests();
         return;
-      }
-      else{
+      } else {
         toast({
           variant: "destructive",
           title: "You already have a pending request to join this organization",
         });
         return;
       }
-    
     } catch (error) {
       console.error("Error requesting to join organization:", error);
     }
@@ -207,7 +240,7 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
       });
 
       await updateDoc(requestRef, {
-        status: "approved",
+        status: JoinRequestStatus.approved,
       });
 
       fetchOrganizations();
@@ -222,7 +255,7 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     try {
       const requestRef = doc(db, "joinRequests", requestId);
       await updateDoc(requestRef, {
-        status: "rejected",
+        status: JoinRequestStatus.rejected,
       });
 
       fetchJoinRequests();
@@ -252,32 +285,88 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     setNotes(notes);
   };
 
-  const updateCurrentOrganization = () => {
+  const updateCurrentOrganization = async () => {
     if (!user) return;
     if (pathName.includes("organisation")) {
       const orgId = pathName.split("/")[2];
-      setCurrentOrganization(organizations.find((org) => org.id === orgId));
+      console.log(pathName.split("/"));
+      console.log(orgId);
+      if (!orgId) return;
+      const org = await getDoc(doc(db, "organizations", orgId));
+      if (!org.exists()) {
+        toast({
+          variant: "destructive",
+          title: "Organization not found",
+        });
+        return;
+      }
+      setCurrentOrganization({
+        id: orgId,
+        ...org.data(),
+      } as Organization);
       getCurrentOrganizationNotes(orgId);
     }
   };
 
+  const deleteNoteFromOrganization = async (orgId: string, noteId: string) => {
+    if (!orgId) return;
+    if (!noteId) return;
+    try {
+      const orgRef = doc(db, "organizations", orgId);
+      await updateDoc(orgRef, {
+        notes: arrayRemove(noteId),
+      });
+      getCurrentOrganizationNotes(orgId);
+    } catch (error) {
+      console.error("Error deleting note from organization: ", error);
+    }
+  };
 
-  const removeMemberFromOrganization = async (orgId: string, userId: string) => {
+  const removeMemberFromOrganization = async (
+    orgId: string,
+    userId: string
+  ) => {
     if (!user) return;
     try {
       const orgRef = doc(db, "organizations", orgId);
-      
+
       await updateDoc(orgRef, {
         members: arrayRemove(userId),
       });
       toast({
         title: "Member removed from organization",
-      }); 
+      });
       fetchOrganizations();
+      fetchOrganizationMembers(orgId);
     } catch (error) {
       console.error("Error removing member from organization:", error);
     }
   };
+
+  const fetchOrganizationMembers = async (orgId: string) => {
+    if (!user) return;
+    try {
+      const orgRef = doc(db, "organizations", orgId);
+      const orgSnapshot = await getDoc(orgRef);
+      if (!orgSnapshot.exists()) return;
+      const members = await Promise.all(orgSnapshot.data().members.map(async (memberId : string) => {
+        const userData = await fetch(
+          `/api/getUserByid/${memberId}`
+        ).then((res) => res.json());
+
+        return {
+          id: memberId,
+          ...userData,
+        } as User;
+      })) as User[];
+
+      setMembers(members);
+
+    } catch (error) {
+      console.error("Error fetching organization members:", error);
+    }
+  };
+
   useEffect(() => {
     fetchOrganizations();
   }, [user]);
@@ -292,9 +381,16 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     updateCurrentOrganization();
   }, [pathName, organizations]);
 
+  useEffect(() => {
+    if (currentOrganization) {
+      fetchOrganizationMembers(currentOrganization.id);
+    }
+  }, [currentOrganization]);
+
   return (
     <OrganizationContext.Provider
       value={{
+        members,
         orgNotes: notes,
         currentOrganization,
         organizations,
@@ -306,6 +402,9 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         addNoteToOrganization,
         reloadOrganizations: fetchOrganizations,
         reloadJoinRequests: fetchJoinRequests,
+        removeMemberFromOrganization,
+        deleteNoteFromOrganization,
+        fetchOrganizationMembers,
       }}
     >
       {children}

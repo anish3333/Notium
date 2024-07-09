@@ -35,18 +35,16 @@ export default function RootLayout({
         },
       }}
     >
-        <html lang="en">
-          <body className={`${inter.className} bg-slate-950`}>
+      <html lang="en">
+        <body className={`${inter.className} bg-slate-950`}>
+          <OrganizationProvider>
             <NotesListProvider>
-              <OrganizationProvider>
-                {children}
-                <Toaster />
-              </OrganizationProvider>
+              {children}
+              <Toaster />
             </NotesListProvider>
-          </body>
-        </html>
+          </OrganizationProvider>
+        </body>
+      </html>
     </ClerkProvider>
   );
 }
-
-

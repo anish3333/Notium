@@ -7,6 +7,7 @@ export interface Note {
   createdAt: string;
   userId: string; // Add userId field
   imageUrl: string[];
+  orgId ?: string;
   // pinned: false;
 }
 
