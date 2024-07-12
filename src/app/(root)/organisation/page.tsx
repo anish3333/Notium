@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { OrganizationContext } from "@/context/OrganisationContext";
 import Link from "next/link";
 import React, { useContext } from "react";
@@ -13,25 +14,26 @@ const page = () => {
         <div className="flex flex-col w-full max-w-7xl px-4 py-6">
           {organizations.length > 0 &&
             organizations.map((org, index) => (
-              <div className="flex">
+              <div key={index} className="flex">
                 <Link
-                key={index}
-                href={`/organisation/${org.id}`}
-                className="bg-gray-800 p-6 rounded-lg shadow-lg text-white"
-              >
-                <h1>{org.name}</h1>
-                <p>{org.author}</p>
-              </Link>
-              <Link
-                key={index}
-                href={`/organisation/${org.id}/details`}
-                className="bg-gray-800 p-6 rounded-lg shadow-lg text-white"
-              >
-                <h1>Details</h1>
-              </Link>
-              
+                  key={index}
+                  href={`/organisation/${org.id}`}
+                  className="bg-gray-800 p-6 rounded-lg shadow-lg text-white"
+                >
+                  <h1>{org.name}</h1>
+                  <p>{org.author}</p>
+                </Link>
+                <Link
+                  key={index}
+                  href={`/organisation/${org.id}/details`}
+                  className="bg-gray-800 p-6 rounded-lg shadow-lg text-white"
+                >
+                  <h1>Details</h1>
+                </Link>
+                <div>
+                  <Button>Leave</Button>
+                </div>
               </div>
-              
             ))}
         </div>
       </div>

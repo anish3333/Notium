@@ -1,6 +1,12 @@
 "use client";
 import { useUser } from "@clerk/nextjs";
-import { createContext, useEffect, useState, ReactNode, useContext } from "react";
+import {
+  createContext,
+  useEffect,
+  useState,
+  ReactNode,
+  useContext,
+} from "react";
 import { db, storage } from "@/firebase/firebaseConfig";
 import {
   collection,
@@ -59,9 +65,9 @@ const NotesListContext = createContext<NotesListContextValue>({
 });
 
 const NotesListProvider = ({ children }: { children: ReactNode }) => {
-
   const { user } = useUser();
   const [notesList, setNotesList] = useState<Note[]>([]);
+
   const [selectedNotes, setSelectedNotes] = useState<Note[]>(() => {
     const storedSelectedNotes = localStorage.getItem("selectedNotes");
     return storedSelectedNotes ? JSON.parse(storedSelectedNotes) : [];
@@ -77,13 +83,18 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return;
     try {
       const notesCollection = collection(db, "notes");
-      const notesQuery = query(notesCollection, where("userId", "==", user.id));
+      const notesQuery = 
+      query(notesCollection, 
+        where("userId", "==", user.id),
+        where("orgId", "==", "")
+      );
       const notesSnapshot = await getDocs(notesQuery);
       const notesList = notesSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as Note[];
 
+      
       setNotesList(notesList);
     } catch (error) {
       console.error("Error fetching notes:", error);
@@ -120,13 +131,13 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
       );
       await Promise.all(deleteImagePromises);
 
-      if(noteData.orgId !== undefined && noteData.orgId.length > 0){
+      if (noteData.orgId !== undefined && noteData.orgId.length > 0) {
         console.log("Deleting note from organization", noteData.orgId);
         await deleteNoteFromOrganization(noteData.orgId, id);
         toast({
           variant: "destructive",
           title: "Note deleted from organization",
-        }); 
+        });
       }
 
       await deleteDoc(noteRef);
@@ -141,8 +152,6 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
       console.error("Error deleting document and images: ", error);
     }
   };
-
-  
 
   const saveNote = async (note: Note) => {
     if (!note) return;
@@ -236,7 +245,6 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  
   // const updateSelectedLocalStorageArray = (id: string) => {
   //   const updatedSelectedNotes = selectedNotes.filter(
   //     (note: Note) => note.id !== id

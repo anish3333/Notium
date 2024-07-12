@@ -10,14 +10,14 @@ interface CardProps {
   handleSelectNote: (note: Note) => void;
   handlePinnedNote: (note: Note) => void;
   isPinned: boolean;
-  isSelected: boolean;
+  isSelected: boolean | undefined;
 }
 
 const Card: React.FC<CardProps> = ({
   note,
   onClick,
   handleSelectNote,
-  isSelected,
+  isSelected = false, 
   isPinned,
   handlePinnedNote,
 }) => {

@@ -3,17 +3,22 @@
 import React, { useState, useEffect } from 'react';
 import 'regenerator-runtime/runtime';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
+import { Mic, MicOff } from 'lucide-react';
 interface SpeechToTextProps {
   onTextChange: (text: string) => void;
+  handleStopRecording: (text: string) => void
 }
 
-const SpeechToText: React.FC<SpeechToTextProps> = ({ onTextChange }) => {
-  const { transcript, listening, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
+const SpeechToText: React.FC<SpeechToTextProps> = ({ onTextChange, handleStopRecording }) => {
+  const { transcript, browserSupportsSpeechRecognition, resetTranscript } = useSpeechRecognition();
   const [isRecording, setIsRecording] = useState<boolean>(false);
 
+
   useEffect(() => {
+    // console.log(transcript);
     onTextChange(transcript);
-  }, [transcript, onTextChange]);
+    
+  }, [onTextChange, transcript]);
 
   if (!browserSupportsSpeechRecognition) {
     return <span>Browser doesn't support speech recognition.</span>;
@@ -27,34 +32,20 @@ const SpeechToText: React.FC<SpeechToTextProps> = ({ onTextChange }) => {
   const stopRecording = () => {
     SpeechRecognition.stopListening();
     setIsRecording(false);
+    handleStopRecording(transcript);
+    
   };
 
   return (
-    <div className='text-white max-w-md'>
+    <div className='text-white'>
       <button
-        className='bg-gray-800 p-6 rounded-lg shadow-lg'
+        className='bg-gray-800 rounded-lg shadow-lg'
         onClick={isRecording ? stopRecording : startRecording}
       >
-        {isRecording ? 'Stop Recording' : 'Start Recording'}
+        {isRecording ? <MicOff width={20} height={20} /> : <Mic width={20} height={20} />}
       </button>
-      <p>{transcript}</p>
     </div>
   );
 };
 
-const Page: React.FC = () => {
-  const [transcribedText, setTranscribedText] = useState<string>('');
-
-  const handleTextChange = (newText: string) => {
-    setTranscribedText(newText);
-  };
-
-  return (
-    <div>
-      <SpeechToText onTextChange={handleTextChange} />
-      <p>Transcribed Text: {transcribedText}</p>
-    </div>
-  );
-};
-
-export default Page;
+export default SpeechToText;

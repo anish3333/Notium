@@ -20,7 +20,6 @@ import { fetchOrganizationNotes } from "@/lib/orgUtils";
 import { Note } from "@/types";
 import { toast } from "@/components/ui/use-toast";
 import { User } from "@clerk/clerk-sdk-node";
-import { get } from "http";
 
 interface Organization {
   id: string;
@@ -68,6 +67,10 @@ interface OrganizationContextValue {
   ) => Promise<void>;
   deleteNoteFromOrganization: (orgId: string, noteId: string) => Promise<void>;
   fetchOrganizationMembers: (orgId: string) => Promise<void>;
+  orgPinnedNotes: { [orgId: string]: Note[] };
+  orgSelectedNotes: { [orgId: string]: Note[] };
+  setOrgPinnedNotes: (orgId: string, notes: Note[]) => void;
+  setOrgSelectedNotes: (orgId: string, notes: Note[]) => void;
 }
 
 const OrganizationContext = createContext<OrganizationContextValue>({
@@ -86,16 +89,33 @@ const OrganizationContext = createContext<OrganizationContextValue>({
   removeMemberFromOrganization: async () => {},
   deleteNoteFromOrganization: async () => {},
   fetchOrganizationMembers: async () => {},
+  orgPinnedNotes: {},
+  orgSelectedNotes: {},
+  setOrgPinnedNotes: () => {},
+  setOrgSelectedNotes: () => {},
 });
 
 const OrganizationProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useUser();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
+
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
-  const [currentOrganization, setCurrentOrganization] =
-    useState<Organization>();
+
+  const [currentOrganization, setCurrentOrganization] = useState<Organization>();
+
   const [notes, setNotes] = useState<Note[]>([]);
+
   const [members, setMembers] = useState<User[]>([]);
+
+  const [orgPinnedNotes, setOrgPinnedNotes] = useState<{ [orgId: string]: Note[] }>(() => {
+    const storedOrgPinnedNotes = localStorage.getItem("orgPinnedNotes");
+    return storedOrgPinnedNotes ? JSON.parse(storedOrgPinnedNotes) : {};
+  });
+  const [orgSelectedNotes, setOrgSelectedNotes] = useState<{ [orgId: string]: Note[] }>(() => {
+    const storedOrgSelectedNotes = localStorage.getItem("orgSelectedNotes");
+    return storedOrgSelectedNotes ? JSON.parse(storedOrgSelectedNotes) : {};
+  });
+
   const pathName = usePathname();
 
   const fetchOrganizations = async () => {
@@ -367,6 +387,29 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+
+  const updateOrgPinnedNotes = (orgId: string, notes: Note[]) => {
+    setOrgPinnedNotes(prev => ({
+      ...prev,
+      [orgId]: notes
+    }));
+  };
+
+  const updateOrgSelectedNotes = (orgId: string, notes: Note[]) => {
+    setOrgSelectedNotes(prev => ({
+      ...prev,
+      [orgId]: notes
+    }));
+  };
+
+  useEffect(() => {
+    localStorage.setItem("orgPinnedNotes", JSON.stringify(orgPinnedNotes));
+  }, [orgPinnedNotes]);
+
+  useEffect(() => {
+    localStorage.setItem("orgSelectedNotes", JSON.stringify(orgSelectedNotes));
+  }, [orgSelectedNotes]);
+
   useEffect(() => {
     fetchOrganizations();
   }, [user]);
@@ -405,6 +448,10 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         removeMemberFromOrganization,
         deleteNoteFromOrganization,
         fetchOrganizationMembers,
+        orgPinnedNotes,
+        orgSelectedNotes,
+        setOrgPinnedNotes: updateOrgPinnedNotes,
+        setOrgSelectedNotes: updateOrgSelectedNotes,
       }}
     >
       {children}

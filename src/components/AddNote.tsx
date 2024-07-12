@@ -25,7 +25,7 @@ const AddNote: React.FC = () => {
       createdAt: new Date().toISOString(),
       userId: user.id,
       imageUrl,
-      orgId: pathName.includes("organisation") ? pathName.split("/")[2] : null,
+      orgId: pathName.includes("organisation") ? pathName.split("/")[2] : '',
     };
     try {
       const newNoteRef = await addDoc(collection(db, "notes"), newNote);

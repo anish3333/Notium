@@ -1,51 +1,54 @@
 'use client';
+
 import Card from "@/components/Card";
-import { NotesListContext } from "@/context/NotesListContext";
 import { OrganizationContext } from "@/context/OrganisationContext";
-import { fetchOrganizationNotes } from "@/lib/orgUtils";
 import { Note } from "@/types";
-import { User } from "@clerk/clerk-sdk-node";
-import { useUser } from "@clerk/nextjs";
-import { UserResource } from "@clerk/types";
-import { get } from "http";
-import { useParams, useRouter } from "next/navigation";
-import React, { use, useContext, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import React, { useContext } from "react";
 
-const page = () => {
+const Page = () => {
   const router = useRouter();
-  const { currentOrganization, orgNotes } = useContext(OrganizationContext);
-
-  const { selectedNotes, setSelectedNotes } = useContext(NotesListContext);
-
-  const { pinnedNotes, setPinnedNotes } = useContext(NotesListContext);
+  const { 
+    currentOrganization, 
+    orgNotes, 
+    orgPinnedNotes, 
+    orgSelectedNotes, 
+    setOrgPinnedNotes, 
+    setOrgSelectedNotes 
+  } = useContext(OrganizationContext);
 
   const handleSelectNote = (note: Note) => {
-    const isSelected =
-      selectedNotes.some((n) => n.id === note.id) &&
-      orgNotes.some((n) => n.id === note.id);
-
+    if (!currentOrganization) return;
+    const orgId = currentOrganization.id;
+    const currentSelected = orgSelectedNotes[orgId] || [];
+    const isSelected = currentSelected.some(n => n.id === note.id);
+    
     if (isSelected) {
-      setSelectedNotes(selectedNotes.filter((n) => n.id !== note.id));
+      setOrgSelectedNotes(orgId, currentSelected.filter(n => n.id !== note.id));
     } else {
-      setSelectedNotes([...selectedNotes, note]);
+      setOrgSelectedNotes(orgId, [...currentSelected, note]);
     }
   };
 
   const handlePinnedNote = (note: Note) => {
-    const isPinned =
-      pinnedNotes.some((n) => n.id === note.id) &&
-      orgNotes.some((n) => n.id === note.id);
-
+    if (!currentOrganization) return;
+    const orgId = currentOrganization.id;
+    const currentPinned = orgPinnedNotes[orgId] || [];
+    const isPinned = currentPinned.some(n => n.id === note.id);
+    
     if (isPinned) {
-      setPinnedNotes(pinnedNotes.filter((n) => n.id !== note.id));
+      setOrgPinnedNotes(orgId, currentPinned.filter(n => n.id !== note.id));
     } else {
-      setPinnedNotes([...pinnedNotes, note]);
+      setOrgPinnedNotes(orgId, [...currentPinned, note]);
     }
   };
 
+  const pinnedNotes = currentOrganization 
+    ? orgPinnedNotes[currentOrganization.id] || []
+    : [];
 
   return (
-    <div className="flex flex-col h-screen  w-full px-4 sm:px-6 lg:px-8">
+    <div className="flex flex-col h-screen w-full px-4 sm:px-6 lg:px-8">
       <div className="flex justify-center w-full">
         <div className="flex flex-col w-full max-w-7xl px-4 py-6">
           {pinnedNotes.length > 0 && (
@@ -54,22 +57,18 @@ const page = () => {
                 <h2 className="text-2xl font-bold text-white mb-2">PINNED</h2>
               </div>
               <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4 mb-10">
-                {pinnedNotes.map((note) => {
-                  const isPinned = 
-                  pinnedNotes.some((n) => n.id === note.id) && orgNotes.some((n) => n.id === note.id);
-                  return (isPinned &&
-                    <Card
-                      isOpen={true}
-                      key={note.id}
-                      note={note}
-                      onClick={() => router.push(`/note/${note.id}`)}
-                      handleSelectNote={handleSelectNote}
-                      handlePinnedNote={handlePinnedNote}
-                      isPinned={isPinned}
-                      isSelected={selectedNotes.some((n) => n.id === note.id)}
-                    />
-                  )
-                })}
+                {pinnedNotes.map((note) => (
+                  <Card
+                    isOpen={true}
+                    key={note.id}
+                    note={note}
+                    onClick={() => router.push(`/note/${note.id}`)}
+                    handleSelectNote={handleSelectNote}
+                    handlePinnedNote={handlePinnedNote}
+                    isPinned={true}
+                    isSelected={currentOrganization && orgSelectedNotes[currentOrganization.id]?.some(n => n.id === note.id)}
+                  />
+                ))}
               </div>
             </div>
           )}
@@ -79,8 +78,7 @@ const page = () => {
           </div>
           <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
             {orgNotes.length > 0 && orgNotes.map((note) => {
-              const isPinned = pinnedNotes.some((n) => n.id === note.id);
-              if (isPinned) return;
+              if (currentOrganization && orgPinnedNotes[currentOrganization.id]?.some(n => n.id === note.id)) return null;
               return (
                 <Card
                   isOpen={true}
@@ -89,8 +87,8 @@ const page = () => {
                   onClick={() => router.push(`/note/${note.id}`)}
                   handleSelectNote={handleSelectNote}
                   handlePinnedNote={handlePinnedNote}
-                  isPinned={pinnedNotes.some((n) => n.id === note.id)}
-                  isSelected={selectedNotes.some((n) => n.id === note.id)}
+                  isPinned={false}
+                  isSelected={currentOrganization && orgSelectedNotes[currentOrganization.id]?.some(n => n.id === note.id)}
                 />
               );
             })}
@@ -101,4 +99,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;
