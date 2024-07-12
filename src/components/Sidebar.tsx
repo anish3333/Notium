@@ -1,7 +1,18 @@
 "use client";
 import React, { useContext, useState, useEffect } from "react";
 import Link from "next/link";
-import { Home, NotebookTabsIcon, Trash2, Pin } from "lucide-react";
+import {
+  Home,
+  NotebookTabsIcon,
+  Trash2,
+  Pin,
+  Package,
+  MessageSquare,
+  MapPin,
+  BarChart2,
+  Settings,
+  HelpCircle,
+} from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -9,32 +20,40 @@ import {
 } from "@/components/ui/tooltip";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { NotesListContext } from "@/context/NotesListContext";
+import { OrganizationContext } from "@/context/OrganisationContext";
 import { SignedIn, UserButton } from "@clerk/nextjs";
 import AddNote from "./AddNote";
-import { Note } from "@/types";
+import { arrayRemove, doc, updateDoc } from "firebase/firestore";
+import { db } from "@/firebase/firebaseConfig";
 
-export const sidebarLinks = [
+const sidebarLinks = [
+  { icon: <Home className="h-5 w-5" />, text: "Home", href: "/" },
   {
-    icon: <NotebookTabsIcon className="h-5 w-5" />,
-    text: "Notium",
-    href: "#",
-    colorClass: "text-white",
-    bgColorClass: "bg-primary",
+    icon: <Package className="h-5 w-5" />,
+    text: "Organization",
+    href: "/organisation",
   },
-  // Add more sidebar links with the same structure
 ];
 
 const Sidebar = () => {
+  const { deleteSelectedNotes, pinSelectedNotes, selectedNotes } =
+    useContext(NotesListContext);
   const {
-    deleteSelectedNotes,
-    pinSelectedNotes,
-  } = useContext(NotesListContext);
-
-  const {selectedNotes} = useContext(NotesListContext); 
+    currentOrganization,
+    pinAllOrgSelectedNotes
+  } = useContext(OrganizationContext);
   const [hasSelectedNotes, setHasSelectedNotes] = useState(false);
 
   const handleDeleteSelectedNotes = async () => {
-    await deleteSelectedNotes();
+    deleteSelectedNotes();
+  };
+
+  const handlePinSelectedNotes = async () => {
+    if (currentOrganization) {
+      pinAllOrgSelectedNotes();
+    } else {
+      await pinSelectedNotes();
+    }
   };
 
   useEffect(() => {
@@ -43,14 +62,17 @@ const Sidebar = () => {
 
   return (
     <TooltipProvider>
-      <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
-        <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
+      <aside className="fixed inset-y-0 left-0 z-10 flex w-16 flex-col border-r bg-white">
+        <div className="flex h-16 items-center justify-center">
+          <NotebookTabsIcon className="h-5 w-5 text-gray-500" />
+        </div>
+        <nav className="flex flex-1 flex-col items-center gap-4 p-2">
           {sidebarLinks.map((link, index) => (
             <Tooltip key={index}>
               <TooltipTrigger asChild>
                 <Link
                   href={link.href}
-                  className={`flex h-9 w-9 items-center justify-center rounded-lg ${link.colorClass} transition-colors hover:text-foreground md:h-8 md:w-8 ${link.bgColorClass}`}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
                 >
                   {link.icon}
                   <span className="sr-only">{link.text}</span>
@@ -59,7 +81,8 @@ const Sidebar = () => {
               <TooltipContent side="right">{link.text}</TooltipContent>
             </Tooltip>
           ))}
-
+        </nav>
+        <div className="flex flex-col items-center gap-4 p-2">
           <Tooltip>
             <TooltipTrigger asChild>
               <div>
@@ -68,13 +91,12 @@ const Sidebar = () => {
             </TooltipTrigger>
             <TooltipContent side="right">Add Note</TooltipContent>
           </Tooltip>
-
           {hasSelectedNotes && (
             <>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-white bg-red-500 transition-colors hover:text-foreground md:h-8 md:w-8"
+                    className="flex h-10 w-10 items-center justify-center rounded-lg text-red-500 hover:bg-red-100"
                     onClick={handleDeleteSelectedNotes}
                   >
                     <Trash2 className="h-5 w-5" />
@@ -84,12 +106,11 @@ const Sidebar = () => {
                   Delete Selected Notes
                 </TooltipContent>
               </Tooltip>
-
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-white bg-blue-500 transition-colors hover:text-foreground md:h-8 md:w-8"
-                    onClick={pinSelectedNotes}
+                    className="flex h-10 w-10 items-center justify-center rounded-lg text-blue-500 hover:bg-blue-100"
+                    onClick={handlePinSelectedNotes}
                   >
                     <Pin className="h-5 w-5" />
                   </button>
@@ -98,11 +119,29 @@ const Sidebar = () => {
               </Tooltip>
             </>
           )}
-
+        </div>
+        <div className="flex flex-col items-center gap-4 p-2 mt-auto mb-5">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href="/help"
+                className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
+              >
+                <HelpCircle className="h-5 w-5" />
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right">Help</TooltipContent>
+          </Tooltip>
           <SignedIn>
-            <UserButton />
+            <UserButton
+              appearance={{
+                elements: {
+                  userButtonAvatarBox: "h-5 w-5",
+                },
+              }}
+            />
           </SignedIn>
-        </nav>
+        </div>
       </aside>
     </TooltipProvider>
   );

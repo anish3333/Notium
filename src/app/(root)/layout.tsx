@@ -12,7 +12,7 @@ const layout = ({ children }: { children: React.ReactNode }) => {
   return (
       <SyncUserWithFirebase>
       <div className="flex w-full overflow-x-hidden">
-        <div>
+        <div className='max-sm:hidden'>
           <Sidebar />
         </div>
         <div className="flex-1 sm:pl-[4rem]">

@@ -20,7 +20,6 @@ import {
 import { useParams, useRouter } from "next/navigation";
 import React, { useContext, useState, useEffect, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { set } from "react-hook-form";
 
 const Page = () => {
   const { id } = useParams();

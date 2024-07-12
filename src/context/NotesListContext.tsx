@@ -77,16 +77,20 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
     return storedPinnedNotes ? JSON.parse(storedPinnedNotes) : [];
   });
 
-  const { deleteNoteFromOrganization } = useContext(OrganizationContext);
+  const {
+    deleteNoteFromOrganization,
+    removeOrgNoteFromSelectedNotes,
+    removeOrgNoteFromPinnedNotes,
+  } = useContext(OrganizationContext);
 
   const fetchNotes = async () => {
     if (!user) return;
     try {
       const notesCollection = collection(db, "notes");
-      const notesQuery = 
-      query(notesCollection, 
+      const notesQuery = query(
+        notesCollection,
         where("userId", "==", user.id),
-        where("orgId", "==", "")
+        // where("orgId", "==", "")
       );
       const notesSnapshot = await getDocs(notesQuery);
       const notesList = notesSnapshot.docs.map((doc) => ({
@@ -94,7 +98,6 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
         ...doc.data(),
       })) as Note[];
 
-      
       setNotesList(notesList);
     } catch (error) {
       console.error("Error fetching notes:", error);
@@ -132,12 +135,14 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
       await Promise.all(deleteImagePromises);
 
       if (noteData.orgId !== undefined && noteData.orgId.length > 0) {
-        console.log("Deleting note from organization", noteData.orgId);
         await deleteNoteFromOrganization(noteData.orgId, id);
         toast({
           variant: "destructive",
           title: "Note deleted from organization",
         });
+
+        removeOrgNoteFromSelectedNotes(id);
+        removeOrgNoteFromPinnedNotes(id);
       }
 
       await deleteDoc(noteRef);

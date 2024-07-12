@@ -71,6 +71,11 @@ interface OrganizationContextValue {
   orgSelectedNotes: { [orgId: string]: Note[] };
   setOrgPinnedNotes: (orgId: string, notes: Note[]) => void;
   setOrgSelectedNotes: (orgId: string, notes: Note[]) => void;
+  getCurrentOrganizationNotes: (orgId: string) => void;
+  pinAllOrgSelectedNotes: () => Promise<void>;
+  removeOrgNoteFromSelectedNotes: (noteId: string) => Promise<void>;
+  removeOrgNoteFromPinnedNotes: (noteId: string) => Promise<void>;
+  leaveOrganization: (orgId: string) => Promise<void>;
 }
 
 const OrganizationContext = createContext<OrganizationContextValue>({
@@ -93,6 +98,11 @@ const OrganizationContext = createContext<OrganizationContextValue>({
   orgSelectedNotes: {},
   setOrgPinnedNotes: () => {},
   setOrgSelectedNotes: () => {},
+  getCurrentOrganizationNotes: () => {},
+  pinAllOrgSelectedNotes: async () => {},
+  removeOrgNoteFromSelectedNotes: async () => {},
+  removeOrgNoteFromPinnedNotes: async () => {},
+  leaveOrganization: async () => {},
 });
 
 const OrganizationProvider = ({ children }: { children: ReactNode }) => {
@@ -336,6 +346,15 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
       await updateDoc(orgRef, {
         notes: arrayRemove(noteId),
       });
+      setOrgSelectedNotes(prev => ({
+        ...prev,
+        [orgId]: prev[orgId]?.filter(note => note.id !== noteId) || []
+      }));
+      setOrgPinnedNotes(prev => ({
+        ...prev,
+        [orgId]: prev[orgId]?.filter(note => note.id !== noteId) || []
+      }));
+
       getCurrentOrganizationNotes(orgId);
     } catch (error) {
       console.error("Error deleting note from organization: ", error);
@@ -402,6 +421,95 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     }));
   };
 
+  const pinAllOrgSelectedNotes = async () => {
+    if (!currentOrganization) return;
+    const notesToPin = orgSelectedNotes[currentOrganization.id];
+
+    setOrgPinnedNotes(prev => ({
+      ...prev,
+      [currentOrganization.id]: notesToPin
+    }));
+
+    setOrgSelectedNotes(prev => ({
+      ...prev,
+      [currentOrganization.id]: []
+    }));
+  };
+
+  const removeOrgNoteFromSelectedNotes = async (noteId: string) => {
+    if (!currentOrganization) return;
+    const notes = orgSelectedNotes[currentOrganization.id];
+    setOrgSelectedNotes(prev => ({
+      ...prev,
+      [currentOrganization.id]: notes.filter(note => note.id !== noteId)
+    }));
+  };
+
+  const removeOrgNoteFromPinnedNotes = async (noteId: string) => {
+    if (!currentOrganization) return;
+    const notes = orgPinnedNotes[currentOrganization.id];
+    setOrgPinnedNotes(prev => ({
+      ...prev,
+      [currentOrganization.id]: notes.filter(note => note.id !== noteId)
+    }));
+  };
+
+  const leaveOrganization = async (orgId: string) => {
+    if (!user) return;
+    try {
+      const orgRef = doc(db, "organizations", orgId);
+      const orgDoc = await getDoc(orgRef);
+      
+      if (!orgDoc.exists()) {
+        toast({
+          variant: "destructive",
+          title: "Organization not found",
+        });
+        return;
+      }
+  
+      const orgData = orgDoc.data() as Organization;
+  
+      if (orgData.author === user.id) {
+        toast({
+          variant: "destructive",
+          title: "You can't leave an organization you created",
+          description: "Transfer ownership or delete the organization instead",
+        });
+        return;
+      }
+  
+      await updateDoc(orgRef, {
+        members: arrayRemove(user.id),
+      });
+  
+      // Clear local storage for this org
+      setOrgPinnedNotes(prev => {
+        const { [orgId]: _, ...rest } = prev;
+        return rest;
+      });
+      setOrgSelectedNotes(prev => {
+        const { [orgId]: _, ...rest } = prev;
+        return rest;
+      });
+  
+      toast({
+        title: "You have left the organization",
+      });
+  
+      // Trigger a reload of organizations
+      fetchOrganizations();
+  
+    } catch (error) {
+      console.error("Error leaving organization:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to leave organization",
+        description: "Please try again later",
+      });
+    }
+  };
+
   useEffect(() => {
     localStorage.setItem("orgPinnedNotes", JSON.stringify(orgPinnedNotes));
   }, [orgPinnedNotes]);
@@ -452,6 +560,11 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         orgSelectedNotes,
         setOrgPinnedNotes: updateOrgPinnedNotes,
         setOrgSelectedNotes: updateOrgSelectedNotes,
+        getCurrentOrganizationNotes,
+        pinAllOrgSelectedNotes,
+        removeOrgNoteFromSelectedNotes,
+        removeOrgNoteFromPinnedNotes,
+        leaveOrganization
       }}
     >
       {children}
