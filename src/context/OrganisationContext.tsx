@@ -210,6 +210,7 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     try {
       const org = await getDoc(doc(db, "organizations", orgId));
       if (!org.exists()) {
+        console.log("Org not found");
         toast({
           variant: "destructive",
           title: "Organization not found",
@@ -319,9 +320,12 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return;
     if (pathName.includes("organisation")) {
       const orgId = pathName.split("/")[2];
-      console.log(pathName.split("/"));
-      console.log(orgId);
-      if (!orgId) return;
+      
+      // console.log(pathName.split("/"));
+      // console.log(orgId);
+      
+      if (!orgId || orgId === 'join' || orgId === 'joinRequests') return;
+
       const org = await getDoc(doc(db, "organizations", orgId));
       if (!org.exists()) {
         toast({

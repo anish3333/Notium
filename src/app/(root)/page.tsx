@@ -56,7 +56,6 @@ const Page = () => {
                 {pinnedNotes.map((note) => (
                   note.userId === user?.id  && (
                   <Card
-                    isOpen={true}
                     key={note.id}
                     note={note}
                     onClick={() => router.push(`/note/${note.id}`)}
@@ -79,7 +78,6 @@ const Page = () => {
               if (isPinned) return;
               return (
                 <Card
-                  isOpen={true}
                   key={note.id}
                   note={note}
                   onClick={() => router.push(`/note/${note.id}`)}

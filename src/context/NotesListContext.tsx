@@ -44,6 +44,7 @@ interface NotesListContextValue {
   addNoteImage: (id: string, imageUrlToAdd: string) => Promise<void>;
   deleteNoteImage: (id: string, imageUrltoDelete: string) => Promise<void>;
   addImageToStorage: (file: File) => Promise<string>;
+  handleSetReminder: (note: Note, date: Date | null) => Promise<void>;
 }
 
 const NotesListContext = createContext<NotesListContextValue>({
@@ -62,6 +63,7 @@ const NotesListContext = createContext<NotesListContextValue>({
   addImageToStorage: async (file) => {
     return "";
   },
+  handleSetReminder: async (note, date) => {},
 });
 
 const NotesListProvider = ({ children }: { children: ReactNode }) => {
@@ -250,25 +252,20 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // const updateSelectedLocalStorageArray = (id: string) => {
-  //   const updatedSelectedNotes = selectedNotes.filter(
-  //     (note: Note) => note.id !== id
-  //   );
 
-  //   setSelectedNotes(updatedSelectedNotes);
+  const handleSetReminder = async (note: Note, date: Date | null) => {
+    if (!note) return;
+    try {
+      await updateDoc(doc(db, "notes", note.id), {
+        reminderDate: date,
+        reminderSent: false,
+      });
+      fetchNotes();
+    } catch (error) {
+      console.error("Error updating document: ", error);
+    }
+  };
 
-  //   localStorage.setItem("selectedNotes", JSON.stringify(updatedSelectedNotes));
-  // };
-
-  // const updatePinnedLocalStorageArray = (id: string) => {
-  //   const updatedPinnedNotes = pinnedNotes.filter(
-  //     (note: Note) => note.id !== id
-  //   );
-
-  //   setPinnedNotes(updatedPinnedNotes);
-
-  //   localStorage.setItem("pinnedNotes", JSON.stringify(updatedPinnedNotes));
-  // };
 
   useEffect(() => {
     fetchNotes();
@@ -300,6 +297,7 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
         addNoteImage,
         deleteNoteImage,
         addImageToStorage,
+        handleSetReminder,
       }}
     >
       {children}

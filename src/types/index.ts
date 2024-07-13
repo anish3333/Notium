@@ -8,7 +8,8 @@ export interface Note {
   userId: string; // Add userId field
   imageUrl: string[];
   orgId ?: string;
-  // pinned: false;
+  reminderDate ?: Date;
+  reminderSent ?: boolean;
 }
 
 export interface SidebarLink {
