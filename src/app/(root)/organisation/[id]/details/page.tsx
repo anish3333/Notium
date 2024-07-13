@@ -14,15 +14,17 @@ import { Button } from "@/components/ui/button";
 import { useUser } from "@clerk/nextjs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from "@clerk/clerk-sdk-node";
-
+import { useRouter } from "next/navigation";
 const Page = () => {
   const {
     currentOrganization,
     removeMemberFromOrganization,
     members,
+    deleteOrganization
   } = useContext(OrganizationContext);
   const { user } = useUser();
   const [admin, setAdmin] = useState<User | null>(null);
+  const router = useRouter();
 
   const isAdmin = user?.id === currentOrganization?.author;
 
@@ -43,6 +45,12 @@ const Page = () => {
   const handleRemoveMember = (memberId: string) => {
     if (!currentOrganization) return;
     removeMemberFromOrganization(currentOrganization.id, memberId);
+  };
+
+  const handleDelete = async () => {
+    if (!currentOrganization) return;
+    await deleteOrganization(currentOrganization.id);
+    router.push("/");
   };
 
   useEffect(() => { 
@@ -115,6 +123,7 @@ const Page = () => {
           <div className="space-x-4">
             <Button variant="outline">Edit Organization</Button>
             <Button variant="outline">Manage Permissions</Button>
+            <Button variant="outline" onClick={handleDelete}>Delete Organization</Button>
           </div>
         </section>
       )}

@@ -1,7 +1,7 @@
 "use client";
 import { useUser } from "@clerk/nextjs";
 import { createContext, useEffect, useState, ReactNode } from "react";
-import { db } from "@/firebase/firebaseConfig";
+import { db, storage } from "@/firebase/firebaseConfig";
 import {
   collection,
   doc,
@@ -20,6 +20,7 @@ import { fetchOrganizationNotes } from "@/lib/orgUtils";
 import { Note } from "@/types";
 import { toast } from "@/components/ui/use-toast";
 import { User } from "@clerk/clerk-sdk-node";
+import { deleteObject, ref } from "firebase/storage";
 
 interface Organization {
   id: string;
@@ -76,6 +77,7 @@ interface OrganizationContextValue {
   removeOrgNoteFromSelectedNotes: (noteId: string) => Promise<void>;
   removeOrgNoteFromPinnedNotes: (noteId: string) => Promise<void>;
   leaveOrganization: (orgId: string) => Promise<void>;
+  deleteOrganization: (orgId: string) => Promise<void>;
 }
 
 const OrganizationContext = createContext<OrganizationContextValue>({
@@ -103,6 +105,7 @@ const OrganizationContext = createContext<OrganizationContextValue>({
   removeOrgNoteFromSelectedNotes: async () => {},
   removeOrgNoteFromPinnedNotes: async () => {},
   leaveOrganization: async () => {},
+  deleteOrganization: async () => {},
 });
 
 const OrganizationProvider = ({ children }: { children: ReactNode }) => {
@@ -514,6 +517,80 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  //TODO: Review this code
+
+  const deleteNoteImage = async (id: string, imageUrltoDelete: string) => {
+    if (!id) return;
+    const noteRef = doc(db, "notes", id);
+    const imageRef = ref(storage, imageUrltoDelete);
+    try {
+      await deleteObject(imageRef);
+      await updateDoc(noteRef, {
+        imageUrl: arrayRemove(imageUrltoDelete),
+      });
+    } catch (error) {
+      console.error("Error deleting image: ", error);
+    }
+  };
+
+  const deleteNote = async (id: string) => {
+    if (!id) return;
+    const noteRef = doc(db, "notes", id);
+    try {
+      const noteSnapshot = await getDoc(noteRef);
+      if (!noteSnapshot.exists()) return;
+
+      const noteData = noteSnapshot.data() as Note;
+
+      const imageUrlArray = noteData.imageUrl || [];
+      const deleteImagePromises = imageUrlArray.map((imageUrl) =>
+        deleteNoteImage(id, imageUrl)
+      );
+      await Promise.all(deleteImagePromises);
+
+      if (noteData.orgId !== undefined && noteData.orgId.length > 0) {
+        await deleteNoteFromOrganization(noteData.orgId, id);
+        toast({
+          variant: "destructive",
+          title: "Note deleted from organization",
+        });
+
+        removeOrgNoteFromSelectedNotes(id);
+        removeOrgNoteFromPinnedNotes(id);
+      }
+
+      await deleteDoc(noteRef);
+
+    } catch (error) {
+      console.error("Error deleting document and images: ", error);
+    }
+  };
+
+  const deleteOrganization = async (orgId: string) => {
+    if (!user) return;
+    try {
+      const orgRef = doc(db, "organizations", orgId);
+      const orgDoc = await getDoc(orgRef);  
+
+      await Promise.all(orgDoc.data()?.notes.map(async (noteId : string) => {
+        await deleteNote(noteId);
+      }));
+
+      await deleteDoc(orgRef);
+      toast({
+        title: "Organization deleted",
+      });
+      await fetchOrganizations();
+    } catch (error) {
+      console.error("Error deleting organization:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to delete organization",
+        description: "Please try again later",
+      });
+    }
+  };
+
   useEffect(() => {
     localStorage.setItem("orgPinnedNotes", JSON.stringify(orgPinnedNotes));
   }, [orgPinnedNotes]);
@@ -568,7 +645,8 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         pinAllOrgSelectedNotes,
         removeOrgNoteFromSelectedNotes,
         removeOrgNoteFromPinnedNotes,
-        leaveOrganization
+        leaveOrganization,
+        deleteOrganization
       }}
     >
       {children}

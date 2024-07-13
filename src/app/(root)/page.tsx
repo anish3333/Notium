@@ -6,6 +6,8 @@ import AddNote from "@/components/AddNote";
 import { NotesListContext } from "@/context/NotesListContext";
 import { Note } from "@/types";
 import { useRouter } from "next/navigation";
+import { requestNotificationPermission } from "@/lib/notificationUtils";
+import { checkReminders } from "@/lib/reminderUtils";
 
 const Page = () => {
   const router = useRouter();
@@ -21,6 +23,21 @@ const Page = () => {
     reloadNotesList();
   }, [user]);
 
+  useEffect(() => {
+    requestNotificationPermission();
+    console.log("Notification permission granted");
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const intervalId = setInterval(() => {
+      checkReminders(user.id);
+      console.log("Checking reminders...");
+    }, 60000); // Check every minute
+
+    return () => clearInterval(intervalId);
+  }, [user]);
 
   const handleSelectNote = (note: Note) => {
     const isSelected = selectedNotes.some((n) => n.id === note.id);

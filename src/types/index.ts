@@ -1,4 +1,5 @@
 import { UserPreviewId } from "@clerk/types";
+import { Timestamp } from "firebase/firestore";
 import { LucideIcon } from "lucide-react";
 
 export interface Note {
@@ -8,7 +9,7 @@ export interface Note {
   userId: string; // Add userId field
   imageUrl: string[];
   orgId ?: string;
-  reminderDate ?: Date;
+  reminderDate ?: Timestamp;
   reminderSent ?: boolean;
 }
 
@@ -23,4 +24,11 @@ export interface SidebarLink {
 export interface Collaboration {
   author: string;
   collaborators: string[];
+}
+
+export interface Reminder {
+  id: string;
+  content: string;
+  reminderDate: Timestamp;
+  reminderSent ?: boolean;
 }

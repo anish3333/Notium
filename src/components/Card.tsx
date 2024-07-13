@@ -1,10 +1,23 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Note } from "@/types";
-import { PinIcon, PinOffIcon, Clock, Edit, CheckIcon } from "lucide-react";
+import {
+  PinIcon,
+  PinOffIcon,
+  Clock,
+  Edit,
+  CheckIcon,
+  MoreVertical,
+} from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { NotesListContext } from "@/context/NotesListContext";
+import { Timestamp } from "firebase/firestore";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface CardProps {
   note: Note;
@@ -25,99 +38,111 @@ const Card: React.FC<CardProps> = ({
 }) => {
   const { handleSetReminder } = useContext(NotesListContext);
   const [isEditingReminder, setIsEditingReminder] = useState(false);
-  const [reminderDate, setReminderDate] = useState<Date | null>(note.reminderDate || null);
+  const [reminderDate, setReminderDate] = useState<Date | null>(null);
 
-  const formattedDate = new Date(note.createdAt).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-    hour12: true,
-  });
-
-  const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if ((event.target as HTMLElement).closest(".clickable-area")) {
-      onClick();
+  useEffect(() => {
+    if (note.reminderDate && note.reminderDate instanceof Timestamp) {
+      setReminderDate(note.reminderDate.toDate());
+    } else {
+      setReminderDate(null);
     }
-  };
+  }, [note.reminderDate]);
 
-  const handleSelect = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    handleSelectNote(note);
-  };
-
-  const handlePin = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    handlePinnedNote(note);
-  };
-
-  const handleReminderClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    setIsEditingReminder(!isEditingReminder);
+  const formatDate = (date: Date) => {
+    return date.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+    });
   };
 
   const handleReminderChange = (date: Date | null) => {
-    setReminderDate(date);
-    handleSetReminder(note, date);
+    if (date) {
+      setReminderDate(date);
+      handleSetReminder(note, date);
+    }
     setIsEditingReminder(false);
   };
 
   return (
     <div
       className={cn(
-        "bg-gray-800 rounded-lg shadow-md p-4 cursor-pointer group break-inside-avoid-column transition-opacity duration-200 hover:shadow-lg",
+        "bg-gray-800 rounded-lg shadow-md p-4 group break-inside-avoid-column transition-all duration-200 hover:shadow-lg",
         {
           "border-2 border-blue-500": isSelected,
           "hover:border-gray-600": !isSelected,
         }
       )}
-      onClick={handleClick}
+      onClick={onClick}
     >
       <div className="flex justify-between items-start mb-2">
-        <div className="text-xs font-medium text-gray-400">{formattedDate}</div>
-        <div className="flex space-x-2">
-          <button
-            className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-200",
-              {
-                "bg-blue-500 text-white": isSelected,
-                "bg-gray-700 text-gray-300 hover:bg-gray-600": !isSelected,
-              }
-            )}
-            onClick={handleSelect}
-          >
-            <CheckIcon className="w-4 h-4" />
-          </button>
-          <button
-            className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-200",
-              {
-                "bg-yellow-500 text-white": isPinned,
-                "bg-gray-700 text-gray-300 hover:bg-gray-600": !isPinned,
-              }
-            )}
-            onClick={handlePin}
-          >
-            {isPinned ? <PinOffIcon className="w-4 h-4" /> : <PinIcon className="w-4 h-4" />}
-          </button>
-          <button
-            className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-200",
-              "bg-gray-700 text-gray-300 hover:bg-gray-600"
-            )}
-            onClick={handleReminderClick}
-          >
-            {reminderDate ? <Edit className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
-          </button>
+        <div className="text-xs font-medium text-gray-400">
+          {formatDate(new Date(note.createdAt))}
         </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className="text-gray-400 hover:text-white"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreVertical className="w-4 h-4" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-40 p-0 border-none">
+            <div className="flex flex-col">
+              <button
+                className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:rounded-t-[5px] "
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSelectNote(note);
+                }}
+              >
+                <CheckIcon className="w-4 h-4 mr-2" />
+                {isSelected ? "Deselect" : "Select"}
+              </button>
+              <button
+                className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePinnedNote(note);
+                }}
+              >
+                {isPinned ? (
+                  <>
+                    <PinOffIcon className="w-4 h-4 mr-2" />
+                    Unpin
+                  </>
+                ) : (
+                  <>
+                    <PinIcon className="w-4 h-4 mr-2" />
+                    Pin
+                  </>
+                )}
+              </button>
+              <button
+                className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-b-[5px]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditingReminder(!isEditingReminder);
+                }}
+              >
+                <Clock className="w-4 h-4 mr-2" />
+                Set Reminder
+              </button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
-      <div className="clickable-area">
-        <div className="text-base text-gray-300 max-h-40 overflow-hidden">{note.content}</div>
+      <div className="text-base text-gray-300 max-h-40 overflow-hidden mb-2">
+        {note.content}
       </div>
-      {reminderDate && (
-        <div className="mt-2 text-sm text-yellow-400">
-          Reminder: {reminderDate.toLocaleString()}
+      {reminderDate && reminderDate >= new Date() && (
+        <div className="text-sm text-yellow-400 flex items-center">
+          <Clock className="w-4 h-4 mr-1" />
+          {formatDate(reminderDate)}
         </div>
       )}
       {isEditingReminder && (
@@ -126,9 +151,13 @@ const Card: React.FC<CardProps> = ({
             selected={reminderDate}
             onChange={handleReminderChange}
             showTimeSelect
+            timeIntervals={1}
             dateFormat="MMMM d, yyyy h:mm aa"
-            className="bg-gray-700 text-white rounded p-2"
+            className="bg-gray-700 text-white rounded p-2 w-full"
             placeholderText="Set reminder"
+            onClickOutside={() => setIsEditingReminder(false)}
+            popperPlacement="bottom-start"
+            shouldCloseOnSelect={false}
           />
         </div>
       )}

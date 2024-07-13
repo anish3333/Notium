@@ -163,9 +163,6 @@ const Page = () => {
     setTextToSpeech("");
   }
 
-  // function handleUpdateTranscript(text : string) {
-  //   setContent((prev) => prev + ' '+text);
-  // }
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
