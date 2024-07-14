@@ -1,10 +1,12 @@
-'use client';
+"use client";
 import { useUser } from "@clerk/nextjs";
 import { Dialog, DialogContent } from "@radix-ui/react-dialog";
 import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
-import { User } from "@clerk/clerk-sdk-node";
 import { toast } from "./ui/use-toast";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/firebase/firebaseConfig";
+import { UserDB } from "@/types";
 
 interface CollaboratorsListProps {
   open: boolean;
@@ -13,11 +15,6 @@ interface CollaboratorsListProps {
   removeCollaborator: (userId: string) => void;
 }
 
-interface CollaboratorData {
-  id: string;
-  avatar?: string;
-  username: string;
-}
 
 const CollaboratorsList = ({
   open,
@@ -25,7 +22,9 @@ const CollaboratorsList = ({
   collaborators,
   removeCollaborator,
 }: CollaboratorsListProps) => {
-  const [collaboratorsData, setCollaboratorsData] = useState<CollaboratorData[]>([]);
+  const [collaboratorsData, setCollaboratorsData] = useState<
+    UserDB[]
+  >([]);
   const [loading, setLoading] = useState<boolean>(true); // Loading state
   const { user } = useUser();
 
@@ -37,19 +36,23 @@ const CollaboratorsList = ({
 
     const getCollaborators = async () => {
       setLoading(true); // Start loading
-      if (!user || !collaborators) return;  
+      if (!user || !collaborators) return;
       try {
         const users = await Promise.all(
-          collaborators.map(async (collaborator) => {
-            const userData = await fetch(`/api/getUserByid/${collaborator}`);
-            const data = await userData.json();
-            return {
-              id: data.id,
-              avatar: data.hasImage ? data.imageUrl : null,
-              username: data.username,
-            };
-          })
-        );
+          collaborators.map(
+            async (collaborator) => {
+              const userDocRef = doc(db, "users", collaborator);
+              const userDocSnapshot = await getDoc(userDocRef);
+              if (userDocSnapshot.exists()) {
+                const userData = userDocSnapshot.data();
+                return {
+                  id: userData.id,
+                  ...userData,
+                } as UserDB;
+              } 
+            }
+          ) 
+        ) as UserDB[];
         setCollaboratorsData(users);
       } catch (error) {
         console.error("Error fetching collaborators:", error);
@@ -73,40 +76,44 @@ const CollaboratorsList = ({
         }}
       >
         <div className="bg-white text-black rounded-lg shadow-lg w-full max-w-md p-6 flex flex-col gap-4">
-          { ( // Render collaborators only when not loading
+          {
+            // Render collaborators only when not loading
             collaboratorsData && collaboratorsData.length > 0 ? (
               collaboratorsData.map((collaborator, index) => (
-                <div className="flex items-center gap-2 justify-between" key={index}>
+                <div
+                  className="flex items-center gap-2 justify-between"
+                  key={index}
+                >
                   <div className="flex flex-wrap items-center gap-2">
                     <img
                       src={collaborator.avatar}
                       alt="avatar"
                       className="w-8 h-8 rounded-full"
                     />
-                    <p>{collaborator.username}</p>
+                    <p>{collaborator.name}</p>
                   </div>
                   <div>
-                    <Button onClick={() => {
-                      removeCollaborator(collaborator.id)
-                      toast({
-                        variant: "destructive",
-                        title: "Collaborator removed",
-                        description: `You have removed ${collaborator.username} from the collaboration`,
-                      })
-                    }}>
+                    <Button
+                      onClick={() => {
+                        removeCollaborator(collaborator.id);
+                        toast({
+                          variant: "destructive",
+                          title: "Collaborator removed",
+                          description: `You have removed ${collaborator.name} from the collaboration`,
+                        });
+                      }}
+                    >
                       Remove
                     </Button>
                   </div>
                 </div>
               ))
+            ) : loading ? (
+              <p>Loading...</p>
             ) : (
-              loading ? (
-                <p>Loading...</p>
-              ) : (
-                <p>No collaborators</p>
-              )
+              <p>No collaborators</p>
             )
-          )}
+          }
         </div>
       </DialogContent>
     </Dialog>

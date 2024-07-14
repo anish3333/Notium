@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { db } from "@/firebase/firebaseConfig";
 import { addDoc, collection, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore";
 import { useUser } from '@clerk/nextjs';
+import { User } from '@clerk/clerk-sdk-node';
 
 const layout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -27,13 +28,13 @@ export default layout
 
 const SyncUserWithFirebase = ({ children }: { children: React.ReactNode }) => {
   const { user } = useUser();
+  console.log(user);
 
   useEffect(() => {
     const createUserInFirestore = async (user: any) => {
       const userCollectionRef = collection(db, "users");
       const userQuery = query(userCollectionRef, where("userId", "==", user.id));
       const querySnapshot = await getDocs(userQuery);
-
 
       // console.log(querySnapshot);
 
@@ -42,6 +43,7 @@ const SyncUserWithFirebase = ({ children }: { children: React.ReactNode }) => {
           userId: user.id,
           email: user.primaryEmailAddress.emailAddress,
           name: user.fullName,
+          avatar: user.hasImage ? user.imageUrl : null,
           createdAt: new Date(),
         });
       }

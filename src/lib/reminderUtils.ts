@@ -11,7 +11,7 @@ import {
 import { sendNotification } from "./notificationUtils";
 
 export async function checkReminders(userId: string) {
-  console.log("User ID:", userId);
+  // console.log("User ID:", userId);
 
   const q = query(
     collection(db, "notes"),

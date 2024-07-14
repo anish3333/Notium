@@ -19,6 +19,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { User } from "@clerk/clerk-sdk-node";
+import { UserDB } from "@/types";
 
 export default function OtherUsersBox({
   value,
@@ -26,9 +27,9 @@ export default function OtherUsersBox({
   users,
   placeholder,
 }: {
-  value ?: User | null;
+  value ?: UserDB | null;
   setValue: any;
-  users: User[] | any;
+  users: UserDB[] | any;
   placeholder: string;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -43,12 +44,12 @@ export default function OtherUsersBox({
           className="w-full justify-between text-gray-950"
         >
           {value
-            ? users.find((user : any) => user.username === value.username)?.username
+            ? users.find((user : any) => user.email === value.email)?.email
             : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="max-w-full p-0">
+      <PopoverContent className="max-w-full p-0 flex flex-grow flex-col">
         <Command>
           <CommandInput placeholder="Collaborate with others..." />
           <CommandList>
@@ -58,21 +59,21 @@ export default function OtherUsersBox({
                 users?.map((user : any) => (
                   <CommandItem
                     key={user.id}
-                    value={user.username || ""}
+                    value={user.email || ""}
                     onSelect={(currentValue) => {
-                      setValue(currentValue === value?.username ? null : user);
+                      setValue(currentValue === value?.email ? null : user);
                       setOpen(false);
                     }}
                   >
                     <Check
                       className={cn(
                         "mr-2 h-4 w-4",
-                        value?.username === user.username
+                        value?.email === user.email
                           ? "opacity-100"
                           : "opacity-0"
                       )}
                     />
-                    {user.username}
+                    {user.email}
                   </CommandItem>
                 ))}
             </CommandGroup>

@@ -7,7 +7,6 @@ import { db } from "@/firebase/firebaseConfig";
 import { NotesListContext } from "@/context/NotesListContext";
 import { usePathname} from "next/navigation";
 import { OrganizationContext } from "@/context/OrganisationContext";
-import path from "path";
 
 const AddNote: React.FC = () => {
   const { user } = useUser();

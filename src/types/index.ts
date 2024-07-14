@@ -13,6 +13,16 @@ export interface Note {
   reminderSent ?: boolean;
 }
 
+export interface UserDB {
+  id: string;
+  userId: string;
+  email: string;
+  name: string;
+  avatar: string;
+  createdAt: string;
+}
+
+
 export interface SidebarLink {
   icon: LucideIcon;
   text: string;
