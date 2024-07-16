@@ -87,20 +87,55 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchNotes = async () => {
     if (!user) return;
-    try {
-      const notesCollection = collection(db, "notes");
-      const notesQuery = query(
-        notesCollection,
-        where("userId", "==", user.id),
-        // where("orgId", "==", "")
-      );
-      const notesSnapshot = await getDocs(notesQuery);
-      const notesList = notesSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Note[];
 
-      setNotesList(notesList);
+    try {
+      const userSnapshot = await getDocs(query(collection(db, "users"), where("userId", "==", user.id)));
+
+      const userId = userSnapshot.docs[0].id;
+      console.log("userId", userId);  
+      
+      const notesCollection = collection(db, "notes");
+
+      // Query to get notes where the user is either the author or a collaborator
+      const notesQuery = query(notesCollection, where("userId", "==", user.id));
+
+      const notesSnapshot = await getDocs(notesQuery);
+      const notesList = notesSnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+        };
+      });
+
+      // Fetch all collaborations
+      const collaborationsCollection = collection(db, "collaborations");
+      const collaborationsQuery = query(
+        collaborationsCollection,
+        where("collaborators", "array-contains", userId)
+      );
+      const collaborationsSnapshot = await getDocs(collaborationsQuery);
+
+
+      // Combine user notes and collaborator notes
+      const collaboratorNotesIds = collaborationsSnapshot.docs.map((doc) => doc.id)
+
+      console.log("collaboratorNotesIds", collaboratorNotesIds);
+
+      const collaboratorNotesList = await Promise.all(collaboratorNotesIds.map(async (id) => {
+        const collaboratorNoteDoc = await getDoc(doc(db, "notes", id));
+        return {
+          id: collaboratorNoteDoc.id,
+          ...collaboratorNoteDoc.data(),
+        }
+      }));
+
+      const uniqueNotesList = [
+        ...notesList,
+        ...collaboratorNotesList
+      ];
+
+      setNotesList(uniqueNotesList as Note[]);
     } catch (error) {
       console.error("Error fetching notes:", error);
     }
@@ -252,7 +287,6 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-
   const handleSetReminder = async (note: Note, date: Date | null) => {
     if (!note) return;
     try {
@@ -265,7 +299,6 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
       console.error("Error updating document: ", error);
     }
   };
-
 
   useEffect(() => {
     fetchNotes();

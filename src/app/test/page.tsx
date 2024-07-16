@@ -1,60 +1,25 @@
 'use client';
+import React, { useEffect } from 'react';
+import { io } from 'socket.io-client';
 
-import React, { useState, useEffect } from 'react';
-import 'regenerator-runtime/runtime';
-import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
-interface SpeechToTextProps {
-  onTextChange: (text: string) => void;
-}
-
-const SpeechToText: React.FC<SpeechToTextProps> = ({ onTextChange }) => {
-  const { transcript, listening, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
-  const [isRecording, setIsRecording] = useState<boolean>(false);
-
+const Page = () => {
   useEffect(() => {
-    onTextChange(transcript);
-  }, [transcript, onTextChange]);
+    const socket = io(process.env.NEXT_PUBLIC_WEBSOCKET_SERVER_URL as string);
 
-  if (!browserSupportsSpeechRecognition) {
-    return <span>Browser doesn't support speech recognition.</span>;
-  }
+    socket.on('connect', () => {
+      console.log('Connected to server');
+    });
 
-  const startRecording = () => {
-    SpeechRecognition.startListening({ continuous: true });
-    setIsRecording(true);
-  };
+    socket.on('disconnect', () => {
+      console.log('Disconnected from server');
+    });
 
-  const stopRecording = () => {
-    SpeechRecognition.stopListening();
-    setIsRecording(false);
-  };
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
-  return (
-    <div className='text-white max-w-md'>
-      <button
-        className='bg-gray-800 p-6 rounded-lg shadow-lg'
-        onClick={isRecording ? stopRecording : startRecording}
-      >
-        {isRecording ? 'Stop Recording' : 'Start Recording'}
-      </button>
-      <p>{transcript}</p>
-    </div>
-  );
-};
-
-const Page: React.FC = () => {
-  const [transcribedText, setTranscribedText] = useState<string>('');
-
-  const handleTextChange = (newText: string) => {
-    setTranscribedText(newText);
-  };
-
-  return (
-    <div>
-      <SpeechToText onTextChange={handleTextChange} />
-      <p>Transcribed Text: {transcribedText}</p>
-    </div>
-  );
+  return <div>Page</div>;
 };
 
 export default Page;

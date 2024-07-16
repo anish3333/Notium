@@ -28,7 +28,7 @@ export default layout
 
 const SyncUserWithFirebase = ({ children }: { children: React.ReactNode }) => {
   const { user } = useUser();
-  console.log(user);
+  // console.log(user);
 
   useEffect(() => {
     const createUserInFirestore = async (user: any) => {
