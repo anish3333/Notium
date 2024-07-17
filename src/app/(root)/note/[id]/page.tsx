@@ -30,8 +30,8 @@ import { Clock } from "lucide-react";
 import { Timestamp } from "firebase/firestore";
 import socket from "@/lib/socket";
 import debounce from "lodash/debounce";
-
-
+import { formatDate } from "@/lib/utils";
+import OnlineUsers from "@/components/OnlineUsers";
 
 const Page = () => {
   const { id }: { id: string } = useParams();
@@ -45,13 +45,16 @@ const Page = () => {
     handleSetReminder,
     deleteNoteImage,
   } = useContext(NotesListContext);
+
   const { isSignedIn, user } = useUser();
   const [note, setNote] = useState(() =>
     notesList.find((note) => note.id === id)
   );
   const [content, setContent] = useState(note?.content ?? "");
   const [imageUrl, setImageUrl] = useState(note?.imageUrl ?? []);
-  const [userToCollaborate, setUserToCollaborate] = useState<UserDB | null>(null);
+  const [userToCollaborate, setUserToCollaborate] = useState<UserDB | null>(
+    null
+  );
   const [collaboration, setCollaboration] = useState<Collaboration | null>(
     null
   );
@@ -61,6 +64,9 @@ const Page = () => {
 
   const [reminderDate, setReminderDate] = useState<Date | null>(null);
   const [isEditingReminder, setIsEditingReminder] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState<UserDB[]>([]);
+  const [onlineUsersModalOpen, setOnlineUsersModalOpen] = useState(false);
+
 
   const fetchUsers = useCallback(async () => {
     if (!isSignedIn) return;
@@ -107,18 +113,6 @@ const Page = () => {
       setReminderDate(null);
     }
   }, [note?.reminderDate]);
-
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "numeric",
-      hour12: true,
-    });
-  };
 
   const handleReminderChange = (date: Date | null) => {
     if (date && note) {
@@ -197,8 +191,6 @@ const Page = () => {
   //   fetchCollaboration();
   // };
 
-  
-
   useEffect(() => {
     fetchCollaboration();
   }, [fetchCollaboration]);
@@ -218,38 +210,42 @@ const Page = () => {
     [note, addImageToStorage, addNoteImage]
   );
 
-  function handleStopRecording(text: string) {
-    if (text.length === 0) return;
-    setContent((prev) => prev + " " + text);
-    setTextToSpeech("");
-  }
-
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   // socket connection
 
   useEffect(() => {
     if (note && user) {
-      socket.emit('authenticate', { userId: user.id, noteId: note.id });
 
-      socket.on('content-update', (updatedContent: string) => {
+      socket.on("online-users-update", (users: UserDB[]) => {
+        setOnlineUsers(users);
+      });
+
+      socket.emit("authenticate", { userId: user.id, noteId: note.id });
+
+      socket.on("content-update", (updatedContent: string) => {
         setContent(updatedContent);
       });
 
-      socket.on('collaborator-joined', (collaboratorId: string) => {
+      socket.on("collaborator-joined", (collaboratorId: string) => {
         console.log(`Collaborator ${collaboratorId} joined the note`);
         // Update UI to show new collaborator
       });
 
-      socket.on('collaborator-left', (collaboratorId: string) => {
+      socket.on("collaborator-left", (collaboratorId: string) => {
         console.log(`Collaborator ${collaboratorId} left the note`);
         // Update UI to remove collaborator
       });
 
+
       return () => {
-        socket.off('content-update');
-        socket.off('collaborator-joined');
-        socket.off('collaborator-left');
+        
+        socket.emit("leave-note", { userId: user.id, noteId: note.id });
+        socket.off("user-joined");
+        socket.off("online-users-update");
+        socket.off("content-update");
+        socket.off("collaborator-joined");
+        socket.off("collaborator-left");
       };
     }
   }, [note, user]);
@@ -257,7 +253,7 @@ const Page = () => {
   const handleContentChange = useCallback(
     debounce(async (newContent: string) => {
       if (note) {
-        await updateDoc(doc(db, 'notes', note.id), { content: newContent });
+        await updateDoc(doc(db, "notes", note.id), { content: newContent });
       }
     }, 500),
     [note]
@@ -265,25 +261,38 @@ const Page = () => {
 
   const debouncedContentChange = useCallback(
     debounce((newContent: string) => {
-      socket.emit('content-change', { noteId: note?.id, content: newContent });
+      socket.emit("content-change", { noteId: note?.id, content: newContent });
       handleContentChange(newContent);
     }, 500),
     [note, socket, handleContentChange]
   );
-  
+
   const onContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
     setContent(newContent);
     debouncedContentChange(newContent);
   };
 
-  const notifyCollaboratorAdded = useCallback((collaboratorId: string) => {
-    socket.emit('collaborator-added', { noteId: note?.id, collaboratorId });
-  }, [note]);
+  const notifyCollaboratorAdded = useCallback(
+    (collaboratorId: string) => {
+      socket.emit("collaborator-added", { noteId: note?.id, collaboratorId });
+    },
+    [note]
+  );
 
-  const notifyCollaboratorRemoved = useCallback((collaboratorId: string) => {
-    socket.emit('collaborator-removed', { noteId: note?.id, collaboratorId });
-  }, [note]);
+  const notifyCollaboratorRemoved = useCallback(
+    (collaboratorId: string) => {
+      socket.emit("collaborator-removed", { noteId: note?.id, collaboratorId });
+    },
+    [note]
+  );
+
+  function handleStopRecording(text: string) {
+    const newContent = content + " " + text;
+    setContent(newContent);
+    debouncedContentChange(newContent);
+    setTextToSpeech("");
+  }
 
   const handleCollaborate = useCallback(async () => {
     if (!note || !userToCollaborate) return;
@@ -332,9 +341,6 @@ const Page = () => {
     fetchUsers();
     fetchCollaboration();
   };
-
-
-
 
   useEffect(() => {
     if (userToCollaborate) {
@@ -470,6 +476,12 @@ const Page = () => {
                 >
                   Collaborators
                 </Button>
+                <Button
+                  onClick={() => setOnlineUsersModalOpen(true)}
+                  variant="outline"
+                >
+                  Online Users ({onlineUsers.length})
+                </Button>
               </div>
               <OtherUsersBox
                 users={users}
@@ -498,6 +510,13 @@ const Page = () => {
             handleClose={() => setOpenCollaboratorsList(false)}
             collaborators={collaboration?.collaborators}
             removeCollaborator={removeCollaborator}
+          />
+
+          {/* Add the OnlineUsersModal component */}
+          <OnlineUsers
+            isOpen={onlineUsersModalOpen}
+            onOpenChange={setOnlineUsersModalOpen}
+            users={onlineUsers}
           />
         </main>
       </div>

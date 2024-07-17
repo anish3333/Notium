@@ -66,6 +66,8 @@ const NotesListContext = createContext<NotesListContextValue>({
   handleSetReminder: async (note, date) => {},
 });
 
+//TODO: COLLABORATORS AND AUTHOR HAVE DIFFERENT IDS SO STREAMLINE THAT INCONSISTENCY
+
 const NotesListProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useUser();
   const [notesList, setNotesList] = useState<Note[]>([]);
