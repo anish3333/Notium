@@ -50,7 +50,7 @@ const Page = () => {
   const handleDelete = async () => {
     if (!currentOrganization) return;
     await deleteOrganization(currentOrganization.id);
-    router.push("/");
+    router.push("/organisation");
   };
 
   useEffect(() => { 

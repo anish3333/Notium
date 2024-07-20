@@ -213,14 +213,12 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     try {
       const org = await getDoc(doc(db, "organizations", orgId));
       if (!org.exists()) {
-        console.log("Org not found");
         toast({
           variant: "destructive",
           title: "Organization not found",
         });
         return;
       }
-      // console.log(org.data());
       if (org.data().members.includes(user.id)) {
         toast({
           variant: "destructive",

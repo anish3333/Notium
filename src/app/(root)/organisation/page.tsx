@@ -1,62 +1,81 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { OrganizationContext } from "@/context/OrganisationContext";
-import Link from "next/link";
-import React, { useContext } from "react";
+import YourOrganizations from "@/components/YourOrganizations";
+import RequestJoinOrg from "@/components/RequestJoinOrg";
+import JoinRequests from "@/components/JoinRequests";
+import { OrgForm } from "@/components/OrgForm";
+import { useUser } from "@clerk/nextjs";
+import {
+  FiUser,
+  FiActivity,
+  FiBriefcase,
+  FiUserPlus,
+  FiUsers,
+} from "react-icons/fi";
+import OrgStats from "@/components/OrgStats";
 
-const Page = () => {
-  const { organizations, leaveOrganization } = useContext(OrganizationContext);
+const Dashboard = () => {
+  const { user } = useUser();
+
   return (
-    <div className="container mx-auto px-8 py-8 bg-gray-900 rounded-lg shadow-lg mt-8">
-      <h1 className="text-3xl font-bold mb-6 text-gray-100">
-        Your Organizations
-      </h1>
-      {organizations.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {organizations.map((org, index) => (
-            <div
-              key={index}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-transform transform hover:scale-105"
-            >
-              <div className="p-6">
-                <h2 className="text-xl font-semibold mb-2 text-gray-900 dark:text-gray-100">
-                  {org.name}
-                </h2>
-                <div className="flex justify-between items-center">
-                  <Link
-                    href={`/organisation/${org.id}`}
-                    className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-600 font-medium"
-                  >
-                    Notes
-                  </Link>
-                  <Link
-                    href={`/organisation/${org.id}/details`}
-                    className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-600 font-medium"
-                  >
-                    Details
-                  </Link>
-                </div>
-              </div>
-              <div className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-6 py-4">
-                <Button
-                  variant="outline"
-                  className="w-full text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-600 border-red-600 dark:border-red-400 hover:border-red-800 dark:hover:border-red-600"
-                  onClick={() => leaveOrganization(org.id)}
-                >
-                  Leave Organization
-                </Button>
-              </div>
-            </div>
-          ))}
+    <div className="min-h-screen bg-gray-900 text-gray-100 p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        <div className="bg-gray-800 rounded-lg p-6 flex items-center space-x-4">
+          <img
+            src={user?.imageUrl}
+            alt="Profile"
+            className="w-16 h-16 rounded-full"
+          />
+          <div>
+            <h1 className="text-3xl font-bold">Welcome, {user?.firstName}!</h1>
+            <p className="text-gray-400">
+              Manage your organizations and collaborations here.
+            </p>
+          </div>
         </div>
-      ) : (
-        <p className="text-gray-600 dark:text-gray-300">
-          You are not a member of any organizations yet.
-        </p>
-      )}
+
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-3 lg:grid-cols-4">
+          <div className="md:col-span-2 lg:col-span-3 space-y-6">
+            <YourOrganizations />
+          </div>
+          <div className="space-y-6">
+            <OrgStats />
+            <JoinRequests />
+          </div>
+          <div className="md:col-span-2 lg:col-span-2">
+            <RecentActivity />
+          </div>
+          <div>
+            <RequestJoinOrg />
+          </div>
+          <div>
+            <OrgForm />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
-export default Page;
+
+
+const RecentActivity = () => (
+  <div className="bg-gray-800 rounded-lg p-6 shadow-lg h-full">
+    <h2 className="text-xl font-semibold mb-4 flex items-center">
+      <FiActivity className="mr-2" /> Recent Activity
+    </h2>
+    <ul className="space-y-2">
+      <li className="bg-gray-700 p-3 rounded-lg">
+        Joined "Tech Innovators" organization
+      </li>
+      <li className="bg-gray-700 p-3 rounded-lg">
+        Created "Project Alpha" in "Data Science Group"
+      </li>
+      <li className="bg-gray-700 p-3 rounded-lg">
+        Invited 3 new members to "AI Research Team"
+      </li>
+    </ul>
+  </div>
+);
+
+export default Dashboard;

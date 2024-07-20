@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -17,8 +16,11 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { User } from "@clerk/clerk-sdk-node";
 import { OrganizationContext } from "@/context/OrganisationContext";
+import { UserDB } from "@/types";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/firebase/firebaseConfig";
+import { FiTrash2 } from "react-icons/fi";
 
-// Define the schema for the form
 const formSchema = z.object({
   name: z.string().min(2, {
     message: "Organisation name must be at least 2 characters.",
@@ -27,56 +29,71 @@ const formSchema = z.object({
 });
 
 export function OrgForm() {
-  // State to hold members
-  const [members, setMembers] = useState<string[]>([]);
-  const { isSignedIn, user } = useUser(); // Use this to get the current user info from Clerk
-  const [users, setUsers] = useState<User[]>([]);
+  const [members, setMembers] = useState<UserDB[]>([]);
+  const { isSignedIn, user } = useUser();
+  const [users, setUsers] = useState<UserDB[]>([]);
   const { addOrganization } = useContext(OrganizationContext);
 
   const fetchUsers = useCallback(async () => {
     if (!isSignedIn) return;
     try {
-      const response = await fetch("/api/users");
-      const data = await response.json();
-      const filteredUsers = data.data.filter((u: User) => u.id !== user.id);
-      console.log(filteredUsers);
-      setUsers(filteredUsers);
+      const usersQuery = query(
+        collection(db, "users"),
+        where("userId", "!=", user.id)
+      );
+      const querySnapshot = await getDocs(usersQuery);
+      const usersData = querySnapshot.docs.map(
+        (doc) =>
+          ({
+            id: doc.id,
+            ...doc.data(),
+          } as UserDB)
+      );
+
+      const filteredUsers = usersData.filter(
+        (u: UserDB) => !members.find((m) => m.userId === u.userId)
+      );
+      setUsers(filteredUsers as UserDB[]);
     } catch (error) {
       console.error("Error fetching users:", error);
     }
-  }, [isSignedIn, user]);
+  }, [isSignedIn, user, members]);
 
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
-  // Initialize the form
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: { name: "", members: [] },
   });
 
-  // Function to add a member
-  const addMember = (newMember: User) => {
-    if (
-      newMember &&  
-      newMember.username &&
-      !members.includes(newMember.username)
-    ) {
-      const updatedMembers = [...members, newMember.username];
+  const onSubmit = (data: any) => {
+    console.log(data);
+    addOrganization(data.name, members.map(member => member.userId));
+    form.reset();
+    setMembers([]);
+  };
+
+  const addMember = (newMember: UserDB) => {
+    if (newMember && !members.find((m) => m.userId === newMember.userId)) {
+      const updatedMembers = [...members, newMember];
       setMembers(updatedMembers);
-      form.setValue("members", updatedMembers as never[]);
+      form.setValue("members", updatedMembers.map((member) => member.userId) as never[]);
     }
   };
 
-  // Handle form submission
-  const onSubmit = (data: any) => {
-    addOrganization(data.name, data.members);  
+  const removeMember = (userId: string) => {
+    const updatedMembers = members.filter((m) => m.userId !== userId);
+    setMembers(updatedMembers);
+    form.setValue("members", updatedMembers.map((member) => member.userId) as never[]);
   };
 
   return (
-    <div className="flex flex-col gap-4 max-w-md text-stone-300 border border-stone-300 rounded-md p-4">
+    <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
+      <h2 className="text-2xl font-semibold mb-4">Create New Organization</h2>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
             control={form.control}
             name="name"
@@ -87,6 +104,7 @@ export function OrgForm() {
                   <Input
                     placeholder="Enter your Organisation name"
                     {...field}
+                    className="bg-gray-700 text-white border-gray-600"
                   />
                 </FormControl>
                 <FormMessage />
@@ -96,29 +114,34 @@ export function OrgForm() {
 
           <FormItem className="flex flex-col gap-2">
             <FormLabel>Members</FormLabel>
-            <FormControl >
+            <FormControl>
               <OtherUsersBox
                 placeholder="Choose members"
-                setValue={(val: User) => {
-                  addMember(val);
-                }}
+                setValue={addMember}
                 users={users}
               />
             </FormControl>
-            <div className="mt-2">
-              {members.map((member, index) => (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {members.map((member) => (
                 <div
-                key={index}
-                className="bg-gray-200 text-gray-900 rounded-md px-2 py-1 mb-1"
+                  key={member.userId}
+                  className="bg-gray-700 flex justify-between text-gray-200 rounded-md px-2 py-1 w-full"
                 >
-                  {member}
+                  {member.email.slice(0, member.email.indexOf("@"))}
+                  <button 
+                    className="text-red-400 hover:text-red-300"
+                    type="button"
+                    onClick={() => removeMember(member.userId)}
+                  >
+                    <FiTrash2 className="ml-2 h-4 w-4" />
+                  </button>
                 </div>
               ))}
             </div>
             <FormMessage />
           </FormItem>
 
-          <Button type="submit">Submit</Button>
+          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">Create Organization</Button>
         </form>
       </Form>
     </div>

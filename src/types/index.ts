@@ -1,4 +1,3 @@
-import { UserPreviewId } from "@clerk/types";
 import { Timestamp } from "firebase/firestore";
 import { LucideIcon } from "lucide-react";
 
