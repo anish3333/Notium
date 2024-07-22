@@ -21,12 +21,12 @@ const OnlineUsers: React.FC<OnlineUsersProps> = ({ isOpen, onOpenChange, users }
           <DialogTitle>Online Users</DialogTitle>
         </DialogHeader>
         <ul className="space-y-2 mt-4">
-          {users.map(user => (
+          {users.length ? users.map(user => (
             <li key={user.id} className="flex items-center space-x-2">
               <span className="w-2 h-2 bg-green-500 rounded-full"></span>
               <span>{user.email}</span>
             </li>
-          ))}
+          )) : <p>No users online</p>}
         </ul>
       </DialogContent>
     </Dialog>

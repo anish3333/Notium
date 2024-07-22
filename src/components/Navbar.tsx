@@ -22,11 +22,11 @@ const Navbar = () => {
 
 
   return (
-    <div className="md:hidden flex justify-between w-full p-4 z-10 mr-[4rem]">
-      <div className="flex text-slate-300 items-center gap-2 text-xl font-bold">
+    <div className=" flex justify-between w-full backdrop-blur-md shadow-lg p-3">
+      <div className="md:hidden flex text-slate-300 items-center gap-2 text-xl font-bold">
         <Drawer />
       </div>
-      <div className="w-full">
+      <div className="w-fit">
         <NavbarSearchAndSort
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}

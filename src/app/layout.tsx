@@ -35,7 +35,7 @@ export default function RootLayout({
       }}
     >
       <html lang="en">
-        <body className={`${inter.className} bg-slate-900`}>
+        <body className={`${inter.className} bg-[#0A1929]`}>
           <OrganizationProvider>
             <NotesListProvider>
               {children}

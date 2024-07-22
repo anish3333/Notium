@@ -84,16 +84,6 @@ const Page: React.FC = () => {
 
   return (
     <div className=" min-h-screen w-full px-4 sm:px-6 lg:px-8">
-      <div className="max-md:hidden sticky top-0">
-        <PageSearchAndSort
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          sortCriteria={sortCriteria}
-          sortDirection={sortDirection}
-          handleSortSelection={handleSortSelection}
-          toggleSortDirection={toggleSortDirection}
-        />
-      </div>
 
       <div className="flex flex-col justify-center items-center pt-4">
         <div className="max-w-7xl mx-auto">

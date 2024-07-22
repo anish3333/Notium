@@ -86,17 +86,17 @@ const Card: React.FC<CardProps> = ({
   return (
     <div
       className={cn(
-        "rounded-lg shadow-lg p-6 group break-inside-avoid-column transition-all duration-200 hover:shadow-xl text-[#1A1A1A]",
+        "rounded-lg shadow-md p-6 group break-inside-avoid-column transition-all duration-200 hover:shadow-xl text-gray-800",
         {
-          "border-2 border-blue-500": isSelected,
-          "hover:border-gray-600": !isSelected,
+          "ring-2 ring-blue-400": isSelected,
+          "hover:ring-1 hover:ring-gray-400": !isSelected,
         }
       )}
       style={{ backgroundColor: bgColor }}
       onClick={onClick}
     >
       <div className="flex justify-between items-start mb-2">
-        <div className="text-xs font-medium ">
+        <div className="text-xs font-medium text-gray-600">
           {formatDate(new Date(note.createdAt))}
         </div>
         {(!disabledOptions.select ||
@@ -105,17 +105,17 @@ const Card: React.FC<CardProps> = ({
           <Popover>
             <PopoverTrigger asChild>
               <button
-                className=" hover:text-white"
+                className="text-gray-600 hover:text-gray-800 transition-colors duration-200"
                 onClick={(e) => e.stopPropagation()}
               >
                 <MoreVertical className="w-4 h-4" />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-40 p-0 border-none text-gray-800">
+            <PopoverContent className="w-40 p-0 border-none bg-white shadow-lg rounded-md">
               <div className="flex flex-col">
                 {!disabledOptions.select && (
                   <button
-                    className="flex items-center px-3 py-2 text-sm hover:bg-gray-700 hover:rounded-t-[5px]"
+                    className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 transition-colors duration-200"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleSelectNote(note);
@@ -127,7 +127,7 @@ const Card: React.FC<CardProps> = ({
                 )}
                 {!disabledOptions.pin && (
                   <button
-                    className="flex items-center px-3 py-2 text-sm hover:bg-gray-700"
+                    className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 transition-colors duration-200"
                     onClick={(e) => {
                       e.stopPropagation();
                       handlePinnedNote(note);
@@ -148,7 +148,7 @@ const Card: React.FC<CardProps> = ({
                 )}
                 {!disabledOptions.reminder && (
                   <button
-                    className="flex items-center px-3 py-2 text-sm hover:bg-gray-700 rounded-b-[5px]"
+                    className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 transition-colors duration-200"
                     onClick={(e) => {
                       e.stopPropagation();
                       setIsEditingReminder(!isEditingReminder);
@@ -163,11 +163,11 @@ const Card: React.FC<CardProps> = ({
           </Popover>
         )}
       </div>
-      <div className="text-base max-h-40 overflow-hidden mb-2 mt-2">
+      <div className="text-base max-h-40 overflow-hidden mb-2 mt-2 leading-relaxed">
         {note.content}
       </div>
       {reminderDate && reminderDate >= new Date() && (
-        <div className="text-sm text-yellow-400 flex items-center">
+        <div className="text-sm text-yellow-600 flex items-center mt-2">
           <Clock className="w-4 h-4 mr-1" />
           {formatDate(reminderDate)}
         </div>
@@ -180,7 +180,7 @@ const Card: React.FC<CardProps> = ({
             showTimeSelect
             timeIntervals={1}
             dateFormat="MMMM d, yyyy h:mm aa"
-            className="bg-gray-700 text-white rounded p-2 w-full"
+            className="bg-white text-gray-800 rounded p-2 w-full border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:outline-none"
             placeholderText="Set reminder"
             onClickOutside={() => setIsEditingReminder(false)}
             popperPlacement="bottom-start"

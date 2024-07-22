@@ -1,13 +1,12 @@
 "use client";
 import { useUser } from "@clerk/nextjs";
-import { Dialog, DialogContent } from "@radix-ui/react-dialog";
 import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { toast } from "./ui/use-toast";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
 import { UserDB } from "@/types";
-
+import { Dialog, DialogContent } from "./ui/dialog";
 interface CollaboratorsListProps {
   open: boolean;
   handleClose: () => void;
@@ -67,6 +66,7 @@ const CollaboratorsList = ({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
+
         asChild
         className="fixed max-w-md p-6"
         style={{

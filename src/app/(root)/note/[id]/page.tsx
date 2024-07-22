@@ -26,7 +26,7 @@ import { useDropzone } from "react-dropzone";
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { Clock } from "lucide-react";
+import { Clock, Upload } from "lucide-react";
 import { Timestamp } from "firebase/firestore";
 import socket from "@/lib/socket";
 import debounce from "lodash/debounce";
@@ -61,13 +61,12 @@ const Page = () => {
   );
   const [users, setUsers] = useState<UserDB[]>([]);
   const [openCollaboratorsList, setOpenCollaboratorsList] = useState(false);
-  const [textToSpeech, setTextToSpeech] = useState<string>("");
+  // const [textToSpeech, setTextToSpeech] = useState<string>("");
 
   const [reminderDate, setReminderDate] = useState<Date | null>(null);
   const [isEditingReminder, setIsEditingReminder] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<UserDB[]>([]);
   const [onlineUsersModalOpen, setOnlineUsersModalOpen] = useState(false);
-
 
   const fetchUsers = useCallback(async () => {
     if (!isSignedIn) return;
@@ -217,7 +216,6 @@ const Page = () => {
 
   useEffect(() => {
     if (note && user) {
-
       socket.on("online-users-update", (users: UserDB[]) => {
         setOnlineUsers(users);
       });
@@ -238,9 +236,7 @@ const Page = () => {
         // Update UI to remove collaborator
       });
 
-
       return () => {
-        
         socket.emit("leave-note", { userId: user.id, noteId: note.id });
         socket.off("user-joined");
         socket.off("online-users-update");
@@ -292,7 +288,6 @@ const Page = () => {
     const newContent = content + " " + text;
     setContent(newContent);
     debouncedContentChange(newContent);
-    setTextToSpeech("");
   }
 
   const handleCollaborate = useCallback(async () => {
@@ -349,30 +344,117 @@ const Page = () => {
     }
   }, [userToCollaborate, handleCollaborate]);
 
-  return (<div className="min-h-screen bg-gray-900 text-gray-100">
-    <main className="container mx-auto py-8 px-4 max-w-5xl">
-      <div className="bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
-        <div className="p-8 space-y-8">
-          {/* Image Section */}
-          <section>
-            <h2 className="text-2xl font-semibold mb-4 text-gray-200">Images</h2>
-            <div className="space-y-6">
-              <div className="flex flex-wrap gap-4">
-                {imageUrl.length > 0 &&
-                  imageUrl.map((url, index) => (
-                    <div key={index} className="relative group">
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100">
+      <main className="container mx-auto py-12 px-6 max-w-7xl">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column: Content, Controls, and Reminder */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Content Section with Controls */}
+            <section className="bg-gray-800 rounded-2xl shadow-xl p-6">
+              <h2 className="text-2xl font-bold mb-4 text-gray-100">Content</h2>
+              <Textarea
+                value={content}
+                onChange={onContentChange}
+                rows={15}
+                className="w-full p-4 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-white resize-none transition-colors mb-4"
+                placeholder="Enter your note content here..."
+              />
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-gray-400 text-sm">
+                  {content.length} characters
+                </p>
+                <div className="flex items-center space-x-2">
+                  <SpeechToText handleStopRecording={handleStopRecording} />
+                  <span className="text-sm text-gray-400">
+                    Click mic to start/stop recording
+                  </span>
+                </div>
+              </div>
+              <div className="flex space-x-4">
+                <Button
+                  onClick={handleDelete}
+                  className="flex-1 bg-red-600 hover:bg-red-700 transition-colors"
+                >
+                  Delete
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 transition-colors"
+                >
+                  Save
+                </Button>
+              </div>
+            </section>
+
+            {/* Reminder Section */}
+            <section className="bg-gray-800 rounded-2xl shadow-xl p-6">
+              <h2 className="text-2xl font-bold mb-4 text-gray-100">
+                Reminder
+              </h2>
+              <div className="flex items-center space-x-4 mb-4">
+                {reminderDate ? (
+                  <div className="text-yellow-300 flex items-center bg-yellow-400 bg-opacity-10 px-4 py-2 rounded-full">
+                    <Clock className="w-5 h-5 mr-2" />
+                    {formatDate(reminderDate)}
+                  </div>
+                ) : (
+                  <span className="text-gray-400">No reminder set</span>
+                )}
+                <Button
+                  onClick={() => setIsEditingReminder(!isEditingReminder)}
+                  size="sm"
+                  className="transition-colors hover:bg-blue-500 bg-blue-600"
+                >
+                  {isEditingReminder ? "Cancel" : "Set Reminder"}
+                </Button>
+              </div>
+              {isEditingReminder && (
+                <DatePicker
+                  selected={reminderDate}
+                  onChange={handleReminderChange}
+                  showTimeSelect
+                  timeIntervals={15}
+                  dateFormat="MMMM d, yyyy h:mm aa"
+                  className="bg-gray-700 rounded-lg p-3 w-full border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  placeholderText="Set reminder"
+                  popperPlacement="bottom-start"
+                  shouldCloseOnSelect={false}
+                  showPreviousMonths={false}
+                />
+              )}
+            </section>
+          </div>
+
+          {/* Right Column: Images and Collaboration */}
+          <div className="space-y-8">
+            {/* Image Section */}
+            <section className="bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+              <div className="p-6">
+                <h2 className="text-2xl font-bold mb-2 text-gray-100">
+                  Images
+                </h2>
+                <p className="text-gray-400 mb-4">
+                  Add or manage images for your note
+                </p>
+              </div>
+              <div className="px-6 pb-6">
+                <div className="grid gap-4">
+                  {imageUrl.length > 0 ? (
+                    <div className="relative group">
                       <img
-                        src={url}
-                        alt="Note"
-                        className="w-40 h-40 object-cover rounded-lg shadow-md transition-all duration-300 group-hover:scale-105"
+                        alt="Main note image"
+                        className="w-full rounded-md object-cover"
+                        src={imageUrl[0]}
+                        style={{ height: "300px" }}
                       />
                       <button
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                        onClick={() => deleteNoteImage(id, url)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        onClick={() => deleteNoteImage(id, imageUrl[0])}
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
+                          className="h-4 w-4"
                           viewBox="0 0 20 20"
                           fill="currentColor"
                         >
@@ -384,145 +466,105 @@ const Page = () => {
                         </svg>
                       </button>
                     </div>
-                  ))}
-              </div>
-              <div
-                {...getRootProps()}
-                className={`border-2 border-dashed p-8 rounded-lg cursor-pointer transition-all duration-300 ${
-                  isDragActive
-                    ? "border-blue-500 bg-blue-500 bg-opacity-10"
-                    : "border-gray-600 hover:border-gray-500"
-                }`}
-              >
-                <input {...getInputProps()} />
-                <p className="text-center text-gray-400">
-                  {isDragActive
-                    ? "Drop the files here..."
-                    : "Drag & drop an image here, or click to select an image"}
-                </p>
-              </div>
-            </div>
-          </section>
-    
-          {/* Content Section */}
-          <section>
-            <h2 className="text-2xl font-semibold mb-4 text-gray-200">
-              Content
-            </h2>
-            <Textarea
-              value={content}
-              onChange={onContentChange}
-              rows={10}
-              className="w-full p-4 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white resize-none transition-colors"
-              placeholder="Enter your note content here..."
-            />
-            <p className="text-right text-gray-400 mt-2 text-sm">
-              {content.length} characters
-            </p>
-          </section>
-    
-          {/* Reminder Section */}
-          <section>
-            <h2 className="text-2xl font-semibold mb-4 text-gray-200">
-              Reminder
-            </h2>
-            <div className="flex items-center space-x-4">
-              {reminderDate ? (
-                <div className="text-yellow-400 flex items-center bg-yellow-400 bg-opacity-10 px-4 py-2 rounded-full">
-                  <Clock className="w-5 h-5 mr-2" />
-                  {formatDate(reminderDate)}
+                  ) : (
+                    <div className="aspect-square w-full rounded-md bg-gray-700 flex items-center justify-center">
+                      <span className="text-gray-400">No main image</span>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-3 gap-4">
+                    {imageUrl.slice(1, 3).map((url, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          alt={`Note image ${index + 2}`}
+                          className="w-full rounded-md object-cover"
+                          src={url}
+                          style={{ height: "84px" }}
+                        />
+                        <button
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          onClick={() => deleteNoteImage(id, url)}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                    <div
+                      {...getRootProps()}
+                      className="flex aspect-square w-full items-center justify-center rounded-md border-2 border-dashed border-gray-600 hover:border-gray-500 cursor-pointer transition-colors"
+                    >
+                      <input {...getInputProps()} />
+                      <Upload className="h-6 w-6 text-gray-400" />
+                    </div>
+                  </div>
                 </div>
-              ) : (
-                <span className="text-gray-400">No reminder set</span>
-              )}
-              <Button
-                onClick={() => setIsEditingReminder(!isEditingReminder)}
-                // variant="outline"
-                size="sm"
-                className="transition-colors hover:bg-blue-500 "
-              >
-                {isEditingReminder ? "Cancel" : "Set Reminder"}
-              </Button>
-            </div>
-            {isEditingReminder && (
-              <div className="mt-4">
-                <DatePicker
-                  selected={reminderDate}
-                  onChange={handleReminderChange}
-                  showTimeSelect
-                  timeIntervals={15}
-                  dateFormat="MMMM d, yyyy h:mm aa"
-                  className="bg-gray-700  rounded p-3 w-full border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholderText="Set reminder"
-                  popperPlacement="bottom-start"
-                  shouldCloseOnSelect={false}
+              </div>
+            </section>
+
+            {/* Collaboration Section */}
+            <section className="bg-gray-800 rounded-2xl shadow-xl p-6">
+              <h2 className="text-2xl font-bold mb-4 text-gray-100">
+                Collaboration
+              </h2>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Button
+                    onClick={() => setOpenCollaboratorsList(true)}
+                    className="bg-purple-600 hover:bg-purple-700 transition-colors"
+                  >
+                    Manage Collaborators
+                  </Button>
+                  <div className="text-sm text-gray-400">
+                    {collaboration?.collaborators?.length || 0} collaborator(s)
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <Button
+                    onClick={() => setOnlineUsersModalOpen(true)}
+                    className="border border-gray-500 hover:bg-gray-700"
+                  >
+                    View Online Users
+                  </Button>
+                  <div className="text-sm text-gray-400">
+                    {onlineUsers.length} online
+                  </div>
+                </div>
+                <OtherUsersBox
+                  users={users}
+                  value={userToCollaborate}
+                  setValue={setUserToCollaborate}
+                  placeholder="Add new collaborator"
                 />
               </div>
-            )}
-          </section>
-        </div>
-    
-        {/* Action Buttons */}
-        <div className="bg-gray-750 p-6 flex flex-wrap justify-between items-center gap-4">
-          <div className="flex items-center space-x-4">
-            <SpeechToText
-              onTextChange={(text) => setTextToSpeech(" " + text)}
-              handleStopRecording={handleStopRecording}
-            />
-            <Button
-              onClick={() => setOpenCollaboratorsList(true)}
-              className="bg-purple-600 hover:bg-purple-700 transition-colors"
-            >
-              Collaborators
-            </Button>
-            <Button
-              onClick={() => setOnlineUsersModalOpen(true)}
-              // variant="outline"
-              className="border-gray-500 hover:bg-gray-700"
-            >
-              Online Users ({onlineUsers.length})
-            </Button>
-          </div>
-          <OtherUsersBox
-            users={users}
-            value={userToCollaborate}
-            setValue={setUserToCollaborate}
-            placeholder="Choose collaborators"
-          />
-          <div className="flex space-x-4">
-            <Button
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700 transition-colors"
-            >
-              Delete
-            </Button>
-            <Button
-              onClick={handleSave}
-              className="bg-blue-600 hover:bg-blue-700 transition-colors"
-            >
-              Save
-            </Button>
+            </section>
           </div>
         </div>
-      </div>
-    
-      <CollaboratorsList
+
+        <CollaboratorsList
           open={openCollaboratorsList}
           handleClose={() => setOpenCollaboratorsList(false)}
           collaborators={collaboration?.collaborators}
           removeCollaborator={removeCollaborator}
         />
-    
+
         <OnlineUsers
           isOpen={onlineUsersModalOpen}
           onOpenChange={setOnlineUsersModalOpen}
           users={onlineUsers}
         />
-    
       </main>
-    </div>);
+    </div>
+  );
 };
-
-
 
 export default Page;

@@ -154,7 +154,7 @@ const Sidebar = () => {
         )}
       </div>
 
-      <div className="flex flex-col gap-2 p-4 mt-auto border-t border-gray-700">
+      <div className="flex flex-col gap-2 p-4  mt-auto border-t border-gray-700">
         <button
           className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors duration-200 relative"
           onClick={handleOpenReminderModal}
@@ -162,7 +162,7 @@ const Sidebar = () => {
           <Bell className="h-5 w-5" />
           <span>Reminders</span>
           {activeReminders > 0 && (
-            <div className="absolute flex items-center justify-center top-1 right-1 bg-red-500 text-white rounded-full text-xs w-4 h-4">
+            <div className="flex items-center justify-center bg-red-500 text-white rounded-full text-xs w-4 h-4">
               {activeReminders}
             </div>
           )}
