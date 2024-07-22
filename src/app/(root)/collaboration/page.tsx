@@ -19,19 +19,12 @@ const Page: React.FC = () => {
   const router = useRouter();
   const { user } = useUser();
   const {
-    notesList,
     reloadNotesList,
     selectedNotes,
     setSelectedNotes,
     pinnedNotes,
     setPinnedNotes,
-    filteredAndSortedNotes,
-    searchTerm,
-    setSearchTerm,
-    sortCriteria,
-    sortDirection,
-    handleSortSelection,
-    toggleSortDirection,
+    collaboratedNotes,
   } = useContext(NotesListContext);
 
   useEffect(() => {
@@ -77,25 +70,17 @@ const Page: React.FC = () => {
           handlePinnedNote={handlePinnedNote}
           isPinned={pinnedNotes.some((n) => n.id === note.id)}
           isSelected={selectedNotes.some((n) => n.id === note.id)}
+          disabledOptions={{
+            select: true,
+          }}
         />
       ))}
     </div>
   );
 
   return (
-    <div className=" min-h-screen w-full px-4 sm:px-6 lg:px-8">
-      <div className="max-md:hidden sticky top-0">
-        <PageSearchAndSort
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          sortCriteria={sortCriteria}
-          sortDirection={sortDirection}
-          handleSortSelection={handleSortSelection}
-          toggleSortDirection={toggleSortDirection}
-        />
-      </div>
-
-      <div className="flex flex-col justify-center items-center pt-4">
+    <div className="flex flex-col min-h-screen w-full px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col justify-center items-center">
         <div className="max-w-7xl mx-auto">
           {pinnedNotes.length > 0 && (
             <div className="mb-8  flex flex-col justify-center items-center">
@@ -103,9 +88,9 @@ const Page: React.FC = () => {
               {renderNotes(pinnedNotes, true)}
             </div>
           )}
-          <h2 className="text-2xl font-bold text-white mb-4">NOTES</h2>
+          <h2 className="text-2xl font-bold text-white mb-4">COLLABORATIONS</h2>
           {renderNotes(
-            filteredAndSortedNotes.filter(
+            collaboratedNotes.filter(
               (note) => !pinnedNotes.some((p) => p.id === note.id)
             ),
             false

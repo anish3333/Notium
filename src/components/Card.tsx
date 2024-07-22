@@ -19,6 +19,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
+const bgColorList = [
+  "#FFD6E0", // Soft pink
+  "#C1E7E3", // Soft teal
+  "#FFEFB5", // Soft yellow
+  "#E0C3FC", // Soft lavender
+];
+
 interface CardProps {
   note: Note;
   onClick: () => void;
@@ -26,6 +33,11 @@ interface CardProps {
   handlePinnedNote: (note: Note) => void;
   isPinned: boolean;
   isSelected: boolean;
+  disabledOptions?: {
+    select?: boolean;
+    pin?: boolean;
+    reminder?: boolean;
+  };
 }
 
 const Card: React.FC<CardProps> = ({
@@ -35,10 +47,14 @@ const Card: React.FC<CardProps> = ({
   handlePinnedNote,
   isPinned,
   isSelected,
+  disabledOptions = {},
 }) => {
   const { handleSetReminder } = useContext(NotesListContext);
   const [isEditingReminder, setIsEditingReminder] = useState(false);
   const [reminderDate, setReminderDate] = useState<Date | null>(null);
+  const [bgColor] = useState(() => 
+    bgColorList[Math.floor(Math.random() * bgColorList.length)]
+  );
 
   useEffect(() => {
     if (note.reminderDate && note.reminderDate instanceof Timestamp) {
@@ -70,73 +86,84 @@ const Card: React.FC<CardProps> = ({
   return (
     <div
       className={cn(
-        "bg-gray-800 rounded-lg shadow-md p-6 group break-inside-avoid-column transition-all duration-200 hover:shadow-lg",
+        "rounded-lg shadow-lg p-6 group break-inside-avoid-column transition-all duration-200 hover:shadow-xl text-[#1A1A1A]",
         {
           "border-2 border-blue-500": isSelected,
           "hover:border-gray-600": !isSelected,
         }
       )}
+      style={{ backgroundColor: bgColor }}
       onClick={onClick}
     >
       <div className="flex justify-between items-start mb-2">
-        <div className="text-xs font-medium text-gray-400">
+        <div className="text-xs font-medium ">
           {formatDate(new Date(note.createdAt))}
         </div>
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              className="text-gray-400 hover:text-white"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <MoreVertical className="w-4 h-4" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-40 p-0 border-none text-gray-800">
-            <div className="flex flex-col">
+        {(!disabledOptions.select ||
+          !disabledOptions.pin ||
+          !disabledOptions.reminder) && (
+          <Popover>
+            <PopoverTrigger asChild>
               <button
-                className="flex items-center px-3 py-2 text-sm hover:bg-gray-700 hover:rounded-t-[5px] "
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSelectNote(note);
-                }}
+                className=" hover:text-white"
+                onClick={(e) => e.stopPropagation()}
               >
-                <CheckIcon className="w-4 h-4 mr-2" />
-                {isSelected ? "Deselect" : "Select"}
+                <MoreVertical className="w-4 h-4" />
               </button>
-              <button
-                className="flex items-center px-3 py-2 text-sm  hover:bg-gray-700"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handlePinnedNote(note);
-                }}
-              >
-                {isPinned ? (
-                  <>
-                    <PinOffIcon className="w-4 h-4 mr-2" />
-                    Unpin
-                  </>
-                ) : (
-                  <>
-                    <PinIcon className="w-4 h-4 mr-2" />
-                    Pin
-                  </>
+            </PopoverTrigger>
+            <PopoverContent className="w-40 p-0 border-none text-gray-800">
+              <div className="flex flex-col">
+                {!disabledOptions.select && (
+                  <button
+                    className="flex items-center px-3 py-2 text-sm hover:bg-gray-700 hover:rounded-t-[5px]"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelectNote(note);
+                    }}
+                  >
+                    <CheckIcon className="w-4 h-4 mr-2" />
+                    {isSelected ? "Deselect" : "Select"}
+                  </button>
                 )}
-              </button>
-              <button
-                className="flex items-center px-3 py-2 text-sm hover:bg-gray-700 rounded-b-[5px]"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsEditingReminder(!isEditingReminder);
-                }}
-              >
-                <Clock className="w-4 h-4 mr-2" />
-                Set Reminder
-              </button>
-            </div>
-          </PopoverContent>
-        </Popover>
+                {!disabledOptions.pin && (
+                  <button
+                    className="flex items-center px-3 py-2 text-sm hover:bg-gray-700"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePinnedNote(note);
+                    }}
+                  >
+                    {isPinned ? (
+                      <>
+                        <PinOffIcon className="w-4 h-4 mr-2" />
+                        Unpin
+                      </>
+                    ) : (
+                      <>
+                        <PinIcon className="w-4 h-4 mr-2" />
+                        Pin
+                      </>
+                    )}
+                  </button>
+                )}
+                {!disabledOptions.reminder && (
+                  <button
+                    className="flex items-center px-3 py-2 text-sm hover:bg-gray-700 rounded-b-[5px]"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsEditingReminder(!isEditingReminder);
+                    }}
+                  >
+                    <Clock className="w-4 h-4 mr-2" />
+                    Set Reminder
+                  </button>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
       </div>
-      <div className="text-base text-gray-300 max-h-40 overflow-hidden mb-2 mt-2">
+      <div className="text-base max-h-40 overflow-hidden mb-2 mt-2">
         {note.content}
       </div>
       {reminderDate && reminderDate >= new Date() && (

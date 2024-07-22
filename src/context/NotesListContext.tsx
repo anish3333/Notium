@@ -56,6 +56,8 @@ interface NotesListContextValue {
   filteredAndSortedNotes: Note[];
   handleSortSelection: (criteria: SortCriteria) => void;
   toggleSortDirection: () => void;
+  collaboratedNotes: Note[];
+  fetchCollaboratedNotes: () => Promise<void>;
 }
 
 const NotesListContext = createContext<NotesListContextValue>({
@@ -84,6 +86,8 @@ const NotesListContext = createContext<NotesListContextValue>({
   filteredAndSortedNotes: [],
   handleSortSelection: () => {},
   toggleSortDirection: () => {},
+  collaboratedNotes: [],
+  fetchCollaboratedNotes: async () => {},
 });
 
 //TODO: COLLABORATORS AND AUTHOR HAVE DIFFERENT IDS SO STREAMLINE THAT INCONSISTENCY
@@ -102,36 +106,22 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
     return storedPinnedNotes ? JSON.parse(storedPinnedNotes) : [];
   });
 
+  const [collaboratedNotes, setCollaboratedNotes] = useState<Note[]>([]);
+
   const {
     deleteNoteFromOrganization,
     removeOrgNoteFromSelectedNotes,
     removeOrgNoteFromPinnedNotes,
   } = useContext(OrganizationContext);
 
-  const fetchNotes = async () => {
-    if (!user) return;
 
+
+  const fetchCollaboratedNotes = async () => {
+    if (!user) return;
     try {
       const userSnapshot = await getDocs(query(collection(db, "users"), where("userId", "==", user.id)));
 
       const userId = userSnapshot.docs[0].id;
-      console.log("userId", userId);  
-      
-      const notesCollection = collection(db, "notes");
-
-      // Query to get notes where the user is either the author or a collaborator
-      const notesQuery = query(notesCollection, where("userId", "==", user.id));
-
-      const notesSnapshot = await getDocs(notesQuery);
-      const notesList = notesSnapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-        };
-      });
-
-      // Fetch all collaborations
       const collaborationsCollection = collection(db, "collaborations");
       const collaborationsQuery = query(
         collaborationsCollection,
@@ -153,12 +143,37 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
         }
       }));
 
-      const uniqueNotesList = [
-        ...notesList,
-        ...collaboratorNotesList
-      ];
+      setCollaboratedNotes(collaboratorNotesList as Note[]);
 
-      setNotesList(uniqueNotesList as Note[]);
+    } catch (error) {
+      console.error("Error fetching collaborated notes: ", error);
+    }
+  };
+
+  const fetchNotes = async () => {
+    if (!user) return;
+
+    try {
+      const userSnapshot = await getDocs(query(collection(db, "users"), where("userId", "==", user.id)));
+
+      const userId = userSnapshot.docs[0].id;
+      console.log("userId", userId);  
+      
+      const notesCollection = collection(db, "notes");
+
+      // Query to get notes where the user is either the author or a collaborator
+      const notesQuery = query(notesCollection, where("userId", "==", user.id));
+
+      const notesSnapshot = await getDocs(notesQuery);
+      const notesListLocal = notesSnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+        };
+      });
+
+      setNotesList(notesListLocal as Note[]);
     } catch (error) {
       console.error("Error fetching notes:", error);
     }
@@ -174,6 +189,7 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
         imageUrl: arrayRemove(imageUrltoDelete),
       });
       fetchNotes();
+      fetchCollaboratedNotes();
     } catch (error) {
       console.error("Error deleting image: ", error);
     }
@@ -213,6 +229,7 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
 
       // Reload notes list
       fetchNotes();
+      fetchCollaboratedNotes();
     } catch (error) {
       console.error("Error deleting document and images: ", error);
     }
@@ -228,6 +245,7 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
         imageUrl: note.imageUrl,
       });
       fetchNotes();
+      fetchCollaboratedNotes();
     } catch (error) {
       console.error("Error updating document: ", error);
     }
@@ -264,6 +282,7 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
         imageUrl: arrayUnion(imageUrlToAdd),
       });
       fetchNotes();
+      fetchCollaboratedNotes();
     } catch (error) {
       console.error("Error updating document: ", error);
     }
@@ -286,6 +305,7 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
       setSelectedNotes([]);
       localStorage.setItem("selectedNotes", JSON.stringify([]));
       await fetchNotes();
+      await fetchCollaboratedNotes();
     } catch (error) {
       console.error("Error deleting documents: ", error);
     }
@@ -318,6 +338,7 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
         reminderSent: false,
       });
       fetchNotes();
+      fetchCollaboratedNotes();
     } catch (error) {
       console.error("Error updating document: ", error);
     }
@@ -325,6 +346,7 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     fetchNotes();
+    fetchCollaboratedNotes();
   }, [user]);
 
 
@@ -377,6 +399,9 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
     setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
   };
 
+
+
+
   return (
     <NotesListContext.Provider
       value={{
@@ -403,6 +428,8 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
         filteredAndSortedNotes,
         handleSortSelection,
         toggleSortDirection,
+        collaboratedNotes,
+        fetchCollaboratedNotes,
       }}
     >
       {children}

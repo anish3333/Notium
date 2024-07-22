@@ -5,9 +5,8 @@ import React from 'react'
 
 import { useEffect } from "react";
 import { db } from "@/firebase/firebaseConfig";
-import { addDoc, collection, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore";
+import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
 import { useUser } from '@clerk/nextjs';
-import { User } from '@clerk/clerk-sdk-node';
 
 const layout = ({ children }: { children: React.ReactNode }) => {
   return (
