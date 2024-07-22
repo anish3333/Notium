@@ -6,6 +6,7 @@ import {
   useState,
   ReactNode,
   useContext,
+  useMemo,
 } from "react";
 import { db, storage } from "@/firebase/firebaseConfig";
 import {
@@ -20,7 +21,7 @@ import {
   arrayRemove,
   arrayUnion,
 } from "firebase/firestore";
-import { Note } from "@/types";
+import { Note, SortCriteria } from "@/types";
 import {
   getDownloadURL,
   ref,
@@ -29,6 +30,7 @@ import {
 } from "firebase/storage";
 import { toast } from "@/components/ui/use-toast";
 import { OrganizationContext } from "./OrganisationContext";
+import { usePathname} from "next/navigation";
 
 interface NotesListContextValue {
   notesList: Note[];
@@ -45,6 +47,15 @@ interface NotesListContextValue {
   deleteNoteImage: (id: string, imageUrltoDelete: string) => Promise<void>;
   addImageToStorage: (file: File) => Promise<string>;
   handleSetReminder: (note: Note, date: Date | null) => Promise<void>;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  sortCriteria: SortCriteria;
+  setSortCriteria: (criteria: SortCriteria) => void;
+  sortDirection: "asc" | "desc";
+  setSortDirection: (direction: "asc" | "desc") => void;
+  filteredAndSortedNotes: Note[];
+  handleSortSelection: (criteria: SortCriteria) => void;
+  toggleSortDirection: () => void;
 }
 
 const NotesListContext = createContext<NotesListContextValue>({
@@ -64,11 +75,21 @@ const NotesListContext = createContext<NotesListContextValue>({
     return "";
   },
   handleSetReminder: async (note, date) => {},
+  searchTerm: "",
+  setSearchTerm: () => {},
+  sortCriteria: "dateCreated",
+  setSortCriteria: () => {},
+  sortDirection: "desc",
+  setSortDirection: () => {},
+  filteredAndSortedNotes: [],
+  handleSortSelection: () => {},
+  toggleSortDirection: () => {},
 });
 
 //TODO: COLLABORATORS AND AUTHOR HAVE DIFFERENT IDS SO STREAMLINE THAT INCONSISTENCY
 
 const NotesListProvider = ({ children }: { children: ReactNode }) => {
+  const path = usePathname();
   const { user } = useUser();
   const [notesList, setNotesList] = useState<Note[]>([]);
 
@@ -306,6 +327,7 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
     fetchNotes();
   }, [user]);
 
+
   useEffect(() => {
     localStorage.setItem("selectedNotes", JSON.stringify(selectedNotes));
     setSelectedNotes(selectedNotes);
@@ -315,6 +337,45 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("pinnedNotes", JSON.stringify(pinnedNotes));
     setPinnedNotes(pinnedNotes);
   }, [pinnedNotes]);
+
+
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [sortCriteria, setSortCriteria] = useState<SortCriteria>("dateCreated");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+
+  const handleSortSelection = (criteria: SortCriteria) => {
+    if (sortCriteria === criteria) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortCriteria(criteria);
+      setSortDirection("desc");
+    }
+  };
+
+  const filteredAndSortedNotes = useMemo(() => {
+    const filtered = notesList.filter((note) =>
+      note.content.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return filtered.sort((a, b) => {
+      let comparison = 0;
+      switch (sortCriteria) {
+        case "dateCreated":
+          comparison =
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          break;
+        case "title":
+          comparison = a.content.localeCompare(b.content);
+          break;
+      }
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+
+  }, [notesList, searchTerm, sortCriteria, sortDirection]);
+
+  const toggleSortDirection = () => {
+    setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+  };
 
   return (
     <NotesListContext.Provider
@@ -333,6 +394,15 @@ const NotesListProvider = ({ children }: { children: ReactNode }) => {
         deleteNoteImage,
         addImageToStorage,
         handleSetReminder,
+        searchTerm,
+        setSearchTerm,
+        sortCriteria,
+        setSortCriteria,
+        sortDirection,
+        setSortDirection,
+        filteredAndSortedNotes,
+        handleSortSelection,
+        toggleSortDirection,
       }}
     >
       {children}

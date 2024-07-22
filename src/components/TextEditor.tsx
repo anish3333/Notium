@@ -1,6 +1,7 @@
 import React, { useState, useContext } from "react";
-import { Dialog, DialogContent } from "@radix-ui/react-dialog";
 import { NotesListContext } from "@/context/NotesListContext";
+import { Dialog } from "./ui/dialog";
+import { DialogContent } from "./ui/dialog";
 
 interface TextEditorProps {
   isOpen: boolean;
@@ -52,12 +53,6 @@ const TextEditor: React.FC<TextEditorProps> = ({ isOpen, onClose, onSave }) => {
     <Dialog open={isOpen} onOpenChange={handleSaveAndClose}>
       <DialogContent
         asChild
-        className="fixed max-w-md p-6"
-        style={{
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-        }}
       >
         <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 flex flex-col gap-4">
           <textarea

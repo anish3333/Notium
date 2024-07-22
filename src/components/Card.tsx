@@ -70,7 +70,7 @@ const Card: React.FC<CardProps> = ({
   return (
     <div
       className={cn(
-        "bg-gray-800 rounded-lg shadow-md p-4 group break-inside-avoid-column transition-all duration-200 hover:shadow-lg",
+        "bg-gray-800 rounded-lg shadow-md p-6 group break-inside-avoid-column transition-all duration-200 hover:shadow-lg",
         {
           "border-2 border-blue-500": isSelected,
           "hover:border-gray-600": !isSelected,
@@ -91,10 +91,10 @@ const Card: React.FC<CardProps> = ({
               <MoreVertical className="w-4 h-4" />
             </button>
           </PopoverTrigger>
-          <PopoverContent className="w-40 p-0 border-none">
+          <PopoverContent className="w-40 p-0 border-none text-gray-800">
             <div className="flex flex-col">
               <button
-                className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:rounded-t-[5px] "
+                className="flex items-center px-3 py-2 text-sm hover:bg-gray-700 hover:rounded-t-[5px] "
                 onClick={(e) => {
                   e.stopPropagation();
                   handleSelectNote(note);
@@ -104,7 +104,7 @@ const Card: React.FC<CardProps> = ({
                 {isSelected ? "Deselect" : "Select"}
               </button>
               <button
-                className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                className="flex items-center px-3 py-2 text-sm  hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
                   handlePinnedNote(note);
@@ -123,7 +123,7 @@ const Card: React.FC<CardProps> = ({
                 )}
               </button>
               <button
-                className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-b-[5px]"
+                className="flex items-center px-3 py-2 text-sm hover:bg-gray-700 rounded-b-[5px]"
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsEditingReminder(!isEditingReminder);
@@ -136,7 +136,7 @@ const Card: React.FC<CardProps> = ({
           </PopoverContent>
         </Popover>
       </div>
-      <div className="text-base text-gray-300 max-h-40 overflow-hidden mb-2">
+      <div className="text-base text-gray-300 max-h-40 overflow-hidden mb-2 mt-2">
         {note.content}
       </div>
       {reminderDate && reminderDate >= new Date() && (

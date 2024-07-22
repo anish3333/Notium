@@ -41,3 +41,5 @@ export interface Reminder {
   reminderDate: Timestamp;
   reminderSent ?: boolean;
 }
+
+export type SortCriteria = "dateCreated" | "dateModified" | "title";

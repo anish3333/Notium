@@ -9,6 +9,7 @@ import {
   Package,
   Bell,
   HelpCircle,
+  PlusCircle,
 } from "lucide-react";
 import {
   Tooltip,
@@ -20,19 +21,7 @@ import { NotesListContext } from "@/context/NotesListContext";
 import { OrganizationContext } from "@/context/OrganisationContext";
 import { SignedIn, UserButton, useUser } from "@clerk/nextjs";
 import AddNote from "./AddNote";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  collection,
-  query,
-  where,
-  onSnapshot,
-  Timestamp,
-} from "firebase/firestore";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
 import { Reminder } from "@/types";
 import ReminderModal from "./ReminderModal";
@@ -111,111 +100,95 @@ const Sidebar = () => {
   };
 
   return (
-    <TooltipProvider>
-      <aside className="fixed inset-y-0 left-0 z-10 flex w-16 flex-col border-r bg-white">
-        <div className="flex h-16 items-center justify-center">
-          <NotebookTabsIcon className="h-5 w-5 text-gray-500" />
+      <aside className="fixed inset-y-0 left-0 flex flex-col w-64 bg-gray-900 text-white">
+        <div className="flex items-center justify-center h-16 border-b border-gray-700">
+          <NotebookTabsIcon className="h-8 w-8 text-blue-400" />
+          <span className="ml-2 text-xl font-semibold">Notium</span>
         </div>
-        <nav className="flex flex-1 flex-col items-center gap-4 p-2">
+
+        <nav className="flex-grow flex flex-col gap-2 p-4">
           {sidebarLinks.map((link, index) => (
-            <Tooltip key={index}>
-              <TooltipTrigger asChild>
-                <Link
-                  href={link.href}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
-                >
-                  {link.icon}
-                  <span className="sr-only">{link.text}</span>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right">{link.text}</TooltipContent>
-            </Tooltip>
+            <Link
+              href={link.href}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors duration-200"
+            >
+              {link.icon}
+              <span>{link.text}</span>
+            </Link>
           ))}
         </nav>
-        <div className="flex flex-col items-center gap-4 p-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div>
-                <AddNote />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="right">Add Note</TooltipContent>
-          </Tooltip>
+
+        <div className="flex flex-col gap-2 p-4 border-t border-gray-700">
+          <div>
+            <AddNote />
+            
+          </div>
+
           {hasSelectedNotes && (
             <>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    className="flex h-10 w-10 items-center justify-center rounded-lg text-red-500 hover:bg-red-100"
-                    onClick={handleDeleteSelectedNotes}
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  Delete Selected Notes
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    className="flex h-10 w-10 items-center justify-center rounded-lg text-blue-500 hover:bg-blue-100"
-                    onClick={handlePinSelectedNotes}
-                  >
-                    <Pin className="h-5 w-5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right">Pin Selected Notes</TooltipContent>
-              </Tooltip>
+              <button
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-red-400 hover:bg-gray-800 hover:text-red-300 transition-colors duration-200"
+                onClick={handleDeleteSelectedNotes}
+              >
+                <Trash2 className="h-5 w-5" />
+                <span>Delete Selected</span>
+              </button>
+
+              <button
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-blue-400 hover:bg-gray-800 hover:text-blue-300 transition-colors duration-200"
+                onClick={handlePinSelectedNotes}
+              >
+                <Pin className="h-5 w-5" />
+                <span>Pin Selected</span>
+              </button>
             </>
           )}
         </div>
-        <div className="flex flex-col items-center gap-4 p-2 mt-auto mb-5">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                className="flex h-10 w-10 items-center justify-center rounded-lg text-blue-500 hover:bg-blue-100 relative"
-                onClick={handleOpenReminderModal}
-              >
-                <Bell className="h-5 w-5" />
-                {activeReminders > 0 && (
-                  <div className="absolute flex items-center justify-center top-1 right-1 bg-red-500 text-white rounded-full text-xs w-4 h-4 text-center px-1 ">
-                    {activeReminders}
-                  </div>
-                )}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Reminders</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                href="/help"
-                className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
-              >
-                <HelpCircle className="h-5 w-5" />
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="right">Help</TooltipContent>
-          </Tooltip>
+
+        <div className="flex flex-col gap-2 p-4 mt-auto border-t border-gray-700">
+          <button
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors duration-200 relative"
+            onClick={handleOpenReminderModal}
+          >
+            <Bell className="h-5 w-5" />
+            <span>Reminders</span>
+            {activeReminders > 0 && (
+              <div className="absolute flex items-center justify-center top-1 right-1 bg-red-500 text-white rounded-full text-xs w-4 h-4">
+                {activeReminders}
+              </div>
+            )}
+          </button>
+
+
+          <Link
+            href="/help"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors duration-200"
+          >
+            <HelpCircle className="h-5 w-5" />
+            <span>Help</span>
+          </Link>
+
+
           <SignedIn>
-            <UserButton
-              appearance={{
-                elements: {
-                  userButtonAvatarBox: "h-5 w-5",
-                },
-              }}
-            />
+            <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-300">
+              <UserButton
+                appearance={{
+                  elements: {
+                    userButtonAvatarBox: "h-8 w-8",
+                  },
+                }}
+              />
+              <span>Profile</span>
+            </div>
           </SignedIn>
         </div>
-      </aside>
 
-      <ReminderModal
-        reminders={reminders}
-        setIsReminderModalOpen={setIsReminderModalOpen}
-        isReminderModalOpen={isReminderModalOpen}
-      />
-    </TooltipProvider>
+        <ReminderModal
+          reminders={reminders}
+          setIsReminderModalOpen={setIsReminderModalOpen}
+          isReminderModalOpen={isReminderModalOpen}
+        />
+      </aside>
   );
 };
 

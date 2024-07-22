@@ -11,19 +11,21 @@ import { User } from '@clerk/clerk-sdk-node';
 
 const layout = ({ children }: { children: React.ReactNode }) => {
   return (
-      <SyncUserWithFirebase>
-      <div className="flex w-full overflow-x-hidden">
-        <div className='max-sm:hidden'>
+    <SyncUserWithFirebase>
+      <div className="flex min-h-screen ">
+        <div className='hidden md:block'>
           <Sidebar />
         </div>
-        <div className="flex-1 sm:pl-[4rem]">
+        <div className="flex-1 flex flex-col">
           <Navbar />
-          <main className='w-full'>{children}</main>
+          <main className='flex-1 p-4 md:ml-64'>
+            {children}
+          </main>
         </div>
       </div>
-      </SyncUserWithFirebase>
-  )
-}
+    </SyncUserWithFirebase>
+  );
+};
 export default layout
 
 const SyncUserWithFirebase = ({ children }: { children: React.ReactNode }) => {

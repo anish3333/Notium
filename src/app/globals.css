@@ -78,3 +78,7 @@
 .cl-socialButtonsProviderIcon__github{
   filter: invert(1);
 }
+
+.cl-userButtonPopoverActionButton{
+  @apply text-white hover:bg-blue-500;
+}
