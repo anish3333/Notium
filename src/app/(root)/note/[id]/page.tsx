@@ -26,13 +26,14 @@ import { useDropzone } from "react-dropzone";
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { Clock, Upload } from "lucide-react";
+import { ArrowBigLeft, ChevronLeft, Clock, Dot, Upload } from "lucide-react";
 import { Timestamp } from "firebase/firestore";
 import socket from "@/lib/socket";
 import debounce from "lodash/debounce";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import OnlineUsers from "@/components/OnlineUsers";
 import { Textarea } from "@/components/ui/textarea";
+import Link from "next/link";
 
 const Page = () => {
   const { id }: { id: string } = useParams();
@@ -347,6 +348,34 @@ const Page = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100">
       <main className="container mx-auto py-12 px-6 max-w-7xl">
+        <div className="flex items-center justify-between pb-4">
+
+          <div className="text-gray-100 hover:text-blue-300 text-sm flex items-center justify-center w-fit">
+            <Link
+              href="/"
+            >
+              <div className="flex">
+
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              <p> Back to Notes</p>
+              </div>
+            </Link>
+          </div>
+
+          <div
+            onClick={() => setOnlineUsersModalOpen(true)}
+            className="flex items-center justify-center cursor-pointer text-sm"
+          >
+            <p className="pl-2">Online Users ({onlineUsers.length})</p>
+            <Dot
+              className={cn("w-10 h-10 ", {
+                "text-green-500 shadow-white": onlineUsers.length > 0,
+                "text-gray-400": onlineUsers.length === 0,
+              })}
+            />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column: Content, Controls, and Reminder */}
           <div className="lg:col-span-2 space-y-8">
@@ -357,7 +386,7 @@ const Page = () => {
                 value={content}
                 onChange={onContentChange}
                 rows={15}
-                className="w-full p-4 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-white resize-none transition-colors mb-4"
+                className="custom-scrollbar w-full p-4 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-white resize-none transition-colors mb-4"
                 placeholder="Enter your note content here..."
               />
               <div className="flex items-center justify-between mb-4">
@@ -517,34 +546,29 @@ const Page = () => {
                 Collaboration
               </h2>
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Button
-                    onClick={() => setOpenCollaboratorsList(true)}
-                    className="bg-purple-600 hover:bg-purple-700 transition-colors"
-                  >
-                    Manage Collaborators
-                  </Button>
-                  <div className="text-sm text-gray-400">
-                    {collaboration?.collaborators?.length || 0} collaborator(s)
+                <div className="flex items-center justify-center flex-wrap mb-4 gap-2
+                ">
+                  <div className="flex items-center justify-between">
+                    <Button
+                      onClick={() => setOpenCollaboratorsList(true)}
+                      className="bg-purple-600 hover:bg-purple-700 transition-colors"
+                    >
+                      Manage collaborators (
+                      {collaboration?.collaborators?.length || 0})
+                    </Button>
                   </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <Button
-                    onClick={() => setOnlineUsersModalOpen(true)}
-                    className="border border-gray-500 hover:bg-gray-700"
-                  >
-                    View Online Users
-                  </Button>
-                  <div className="text-sm text-gray-400">
-                    {onlineUsers.length} online
+
+                  <div>
+
+                  <OtherUsersBox
+                    users={users}
+                    value={userToCollaborate}
+                    setValue={setUserToCollaborate}
+                    placeholder="Add new collaborator"
+                  />
                   </div>
+
                 </div>
-                <OtherUsersBox
-                  users={users}
-                  value={userToCollaborate}
-                  setValue={setUserToCollaborate}
-                  placeholder="Add new collaborator"
-                />
               </div>
             </section>
           </div>

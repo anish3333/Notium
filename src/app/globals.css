@@ -75,10 +75,38 @@
     }
   }
 
+  @layer utilities {
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 10px;
+    }
+  
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #2d3748; /* Tailwind's gray-800 */
+      @apply rounded-r-lg;
+    }
+  
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #4a5568; /* Tailwind's gray-600 */
+      @apply rounded-r-lg;
+    }
+  
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #718096; /* Tailwind's gray-500 */
+    }
+    
+  }
+
 .cl-socialButtonsProviderIcon__github{
   filter: invert(1);
 }
 
 .cl-userButtonPopoverActionButton{
   @apply text-white hover:bg-blue-500;
+}
+
+.cl-userButtonPopoverMain{
+  @apply bg-gray-900
+}
+.cl-userButtonPopoverFooter{
+  @apply hidden
 }

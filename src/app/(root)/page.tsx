@@ -1,38 +1,29 @@
 // pages/index.tsx
 
 "use client";
-import React, { useEffect, useContext, useState, useMemo } from "react";
+import React, { useEffect, useContext, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
 import Card from "@/components/Card";
 import AddNote from "@/components/AddNote";
-import SearchAndSort from "@/components/NavbarSearchAndSort";
 import { NotesListContext } from "@/context/NotesListContext";
 import { Note } from "@/types";
 import { useRouter } from "next/navigation";
 import { requestNotificationPermission } from "@/lib/notificationUtils";
 import { checkReminders } from "@/lib/reminderUtils";
-import PageSearchAndSort from "@/components/PageSearchAndSort";
-
-type SortCriteria = "dateCreated" | "dateModified" | "title";
 
 const Page: React.FC = () => {
   const router = useRouter();
   const { user } = useUser();
   const {
-    notesList,
     reloadNotesList,
     selectedNotes,
     setSelectedNotes,
     pinnedNotes,
     setPinnedNotes,
     filteredAndSortedNotes,
-    searchTerm,
-    setSearchTerm,
-    sortCriteria,
-    sortDirection,
-    handleSortSelection,
-    toggleSortDirection,
   } = useContext(NotesListContext);
+
+  const gridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     requestNotificationPermission();
@@ -47,6 +38,30 @@ const Page: React.FC = () => {
       reloadNotesList();
     }
   }, [user]);
+
+  useEffect(() => {
+    const resizeGridItem = (item: HTMLElement) => {
+      const rowHeight = parseInt(window.getComputedStyle(gridRef.current!).getPropertyValue('grid-auto-rows'));
+      const rowGap = parseInt(window.getComputedStyle(gridRef.current!).getPropertyValue('grid-row-gap'));
+      const contentHeight = item.querySelector('.content')!.getBoundingClientRect().height;
+      const rowSpan = Math.ceil((contentHeight + rowGap) / (rowHeight + rowGap));
+      item.style.gridRowEnd = `span ${rowSpan}`;
+    };
+
+    const resizeAllGridItems = () => {
+      const allItems = gridRef.current!.getElementsByClassName('grid-item');
+      for (let x = 0; x < allItems.length; x++) {
+        resizeGridItem(allItems[x] as HTMLElement);
+      }
+    };
+
+    resizeAllGridItems();
+    window.addEventListener('resize', resizeAllGridItems);
+
+    return () => {
+      window.removeEventListener('resize', resizeAllGridItems);
+    };
+  }, [filteredAndSortedNotes, pinnedNotes]);
 
   const handleSelectNote = (note: Note) => {
     const isSelected = selectedNotes.some((n) => n.id === note.id);
@@ -67,28 +82,30 @@ const Page: React.FC = () => {
   };
 
   const renderNotes = (notes: Note[], isPinned: boolean): JSX.Element => (
-    <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-7 space-y-7 mx-auto">
+    <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-y-3 gap-x-4 auto-rows-[0]">
       {notes.map((note) => (
-        <Card
-          key={note.id}
-          note={note}
-          onClick={() => router.push(`/note/${note.id}`)}
-          handleSelectNote={handleSelectNote}
-          handlePinnedNote={handlePinnedNote}
-          isPinned={pinnedNotes.some((n) => n.id === note.id)}
-          isSelected={selectedNotes.some((n) => n.id === note.id)}
-        />
+        <div key={note.id} className="grid-item break-inside-avoid">
+          <div className="content rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 ">
+            <Card
+              note={note}
+              onClick={() => router.push(`/note/${note.id}`)}
+              handleSelectNote={handleSelectNote}
+              handlePinnedNote={handlePinnedNote}
+              isPinned={pinnedNotes.some((n) => n.id === note.id)}
+              isSelected={selectedNotes.some((n) => n.id === note.id)}
+            />
+          </div>
+        </div>
       ))}
     </div>
   );
 
   return (
-    <div className=" min-h-screen w-full px-4 sm:px-6 lg:px-8">
-
+    <div className="min-h-screen w-full px-4 sm:px-6 lg:px-8">
       <div className="flex flex-col justify-center items-center pt-4">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full max-w-7xl mx-auto">
           {pinnedNotes.length > 0 && (
-            <div className="mb-8  flex flex-col justify-center items-center">
+            <div className="mb-8">
               <h2 className="text-2xl font-bold text-white mb-4">PINNED</h2>
               {renderNotes(pinnedNotes, true)}
             </div>

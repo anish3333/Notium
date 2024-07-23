@@ -8,39 +8,41 @@ import { NotesListContext } from "@/context/NotesListContext";
 import NavbarSearchAndSort from "./NavbarSearchAndSort";
 
 const Navbar = () => {
-
-
-
-  const { 
+  const {
     searchTerm,
     setSearchTerm,
     sortCriteria,
     sortDirection,
     handleSortSelection,
     toggleSortDirection,
-   } = useContext(NotesListContext);
-
+  } = useContext(NotesListContext);
 
   return (
-    <div className=" flex justify-between w-full backdrop-blur-md shadow-lg p-3">
-      <div className="md:hidden flex text-slate-300 items-center gap-2 text-xl font-bold">
+    <div className=" flex justify-between w-full backdrop-blur-md shadow-lg p-3 bg-gray-900 bg-opacity-50">
+      <div className="md:hidden flex text-slate-300 items-center gap-2 text-xl font-bold shadow-white">
         <Drawer />
       </div>
-      <div className="w-fit">
+      <div className="w-fit shadow-white">
         <NavbarSearchAndSort
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           sortCriteria={sortCriteria}
           sortDirection={sortDirection}
-          handleSortSelection={handleSortSelection} 
+          handleSortSelection={handleSortSelection}
           toggleSortDirection={toggleSortDirection}
         />
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 ">
         <SignedIn>
-          <UserButton />
+          <UserButton
+            appearance={{
+              elements: {
+                userButtonAvatarBox: "h-8 w-8",
+              },
+            }}
+          />
         </SignedIn>
-        </div>
+      </div>
     </div>
   );
 };

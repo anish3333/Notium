@@ -111,7 +111,7 @@ const Sidebar = () => {
 
   return (
     <aside className="fixed inset-y-0 left-0 flex flex-col w-64 bg-gray-900 text-white">
-      <div className="flex items-center justify-center h-16 border-b border-gray-700">
+      <div className="flex items-center justify-center h-[68px] shadow-border-gray-700 ">
         <NotebookTabsIcon className="h-8 w-8 text-blue-400" />
         <span className="ml-2 text-xl font-semibold">Notium</span>
       </div>
@@ -176,18 +176,7 @@ const Sidebar = () => {
           <span>Help</span>
         </Link>
 
-        <SignedIn>
-          <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-300">
-            <UserButton
-              appearance={{
-                elements: {
-                  userButtonAvatarBox: "h-8 w-8",
-                },
-              }}
-            />
-            <span>Profile</span>
-          </div>
-        </SignedIn>
+        
       </div>
 
       <ReminderModal

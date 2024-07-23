@@ -86,7 +86,7 @@ const Card: React.FC<CardProps> = ({
   return (
     <div
       className={cn(
-        "rounded-lg shadow-md p-6 group break-inside-avoid-column transition-all duration-200 hover:shadow-xl text-gray-800",
+        "flex flex-col rounded-lg shadow-md p-6 group break-inside-avoid-column transition-all duration-200 hover:shadow-xl text-gray-800",
         {
           "ring-2 ring-blue-400": isSelected,
           "hover:ring-1 hover:ring-gray-400": !isSelected,
