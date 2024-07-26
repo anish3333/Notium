@@ -7,9 +7,23 @@ import { useEffect } from "react";
 import { db } from "@/firebase/firebaseConfig";
 import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
 import { useUser } from "@clerk/nextjs";
+import { requestNotificationPermission } from "@/lib/notificationUtils";
+import { checkReminders } from "@/lib/reminderUtils";
 
 const layout = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useUser();
+
+  useEffect(() => {
+    // console.log("checking reminders");
+    requestNotificationPermission();
+    const intervalId = setInterval(() => {
+      if (user?.id) checkReminders(user.id);
+    }, 15000);
+    return () => clearInterval(intervalId);
+  }, [user]);
+  
   return (
+    <>
     <SyncUserWithFirebase>
       <div className="flex min-h-screen ">
         <div className="hidden md:flex">
@@ -25,6 +39,8 @@ const layout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
     </SyncUserWithFirebase>
+    </>
+    
   );
 };
 export default layout;

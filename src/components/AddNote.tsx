@@ -47,7 +47,7 @@ const AddNote: React.FC = () => {
       >
         <CirclePlus
           className="max-sm:fixed max-sm:bottom-0 max-sm:right-0
-          max-sm:m-5 max-sm:text-white h-5 w-5 flex justify-center items-center text-gray-500 cursor-pointer rounded-full"
+          max-sm:m-5 h-5 w-5 flex justify-center items-center text-gray-300 cursor-pointer rounded-full "
         />
         <span className="max-sm:hidden">Add Note</span>
       </div>

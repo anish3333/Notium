@@ -8,8 +8,6 @@ import AddNote from "@/components/AddNote";
 import { NotesListContext } from "@/context/NotesListContext";
 import { Note } from "@/types";
 import { useRouter } from "next/navigation";
-import { requestNotificationPermission } from "@/lib/notificationUtils";
-import { checkReminders } from "@/lib/reminderUtils";
 
 const Page: React.FC = () => {
   const router = useRouter();
@@ -23,15 +21,10 @@ const Page: React.FC = () => {
     filteredAndSortedNotes,
   } = useContext(NotesListContext);
 
-  const gridRef = useRef<HTMLDivElement>(null);
+  const pinnedGridRef = useRef<HTMLDivElement>(null);
+  const notesGridRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    requestNotificationPermission();
-    const intervalId = setInterval(() => {
-      if (user?.id) checkReminders(user.id);
-    }, 60000);
-    return () => clearInterval(intervalId);
-  }, [user]);
+  
 
   useEffect(() => {
     if (user?.id) {
@@ -39,28 +32,55 @@ const Page: React.FC = () => {
     }
   }, [user]);
 
-  useEffect(() => {
-    const resizeGridItem = (item: HTMLElement) => {
-      const rowHeight = parseInt(window.getComputedStyle(gridRef.current!).getPropertyValue('grid-auto-rows'));
-      const rowGap = parseInt(window.getComputedStyle(gridRef.current!).getPropertyValue('grid-row-gap'));
-      const contentHeight = item.querySelector('.content')!.getBoundingClientRect().height;
+  const recalculateLayout = (gridRef: React.RefObject<HTMLDivElement>) => {
+    if (!gridRef.current) {
+      return;
+    }
+
+    const allItems = gridRef.current.getElementsByClassName('grid-item');
+    if (!allItems || allItems.length === 0) {
+      console.warn("No grid items found.");
+      return;
+    }
+
+    const gridComputedStyle = window.getComputedStyle(gridRef.current);
+    const rowHeight = parseInt(gridComputedStyle.getPropertyValue("grid-auto-rows"));
+    const rowGap = parseInt(gridComputedStyle.getPropertyValue("grid-row-gap"));
+
+    if (isNaN(rowHeight) || isNaN(rowGap)) {
+      console.warn("Failed to get grid row height or gap.");
+      return;
+    }
+
+    for (let x = 0; x < allItems.length; x++) {
+      const item = allItems[x] as HTMLElement;
+      const content = item.querySelector(".content");
+
+      if (!content) {
+        console.warn(`Content not found for grid item at index ${x}.`);
+        continue;
+      }
+
+      const contentHeight = content.getBoundingClientRect().height;
       const rowSpan = Math.ceil((contentHeight + rowGap) / (rowHeight + rowGap));
       item.style.gridRowEnd = `span ${rowSpan}`;
+    }
+  };
+
+  useEffect(() => {
+    const recalculateAllLayouts = () => {
+      recalculateLayout(pinnedGridRef);
+      recalculateLayout(notesGridRef);
     };
 
-    const resizeAllGridItems = () => {
-      const allItems = gridRef.current!.getElementsByClassName('grid-item');
-      for (let x = 0; x < allItems.length; x++) {
-        resizeGridItem(allItems[x] as HTMLElement);
-      }
-    };
+    if (pinnedGridRef.current || notesGridRef.current) {
+      recalculateAllLayouts();
+      window.addEventListener("resize", recalculateAllLayouts);
 
-    resizeAllGridItems();
-    window.addEventListener('resize', resizeAllGridItems);
-
-    return () => {
-      window.removeEventListener('resize', resizeAllGridItems);
-    };
+      return () => {
+        window.removeEventListener("resize", recalculateAllLayouts);
+      };
+    }
   }, [filteredAndSortedNotes, pinnedNotes]);
 
   const handleSelectNote = (note: Note) => {
@@ -74,15 +94,22 @@ const Page: React.FC = () => {
 
   const handlePinnedNote = (note: Note) => {
     const isPinned = pinnedNotes.some((n) => n.id === note.id);
+
     if (isPinned) {
+
       setPinnedNotes(pinnedNotes.filter((n) => n.id !== note.id));
+      setTimeout(recalculateLayout, 0);
     } else {
       setPinnedNotes([...pinnedNotes, note]);
+      setTimeout(recalculateLayout, 0);
     }
   };
 
-  const renderNotes = (notes: Note[], isPinned: boolean): JSX.Element => (
-    <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-y-3 gap-x-4 auto-rows-[0]">
+  const renderNotes = (notes: Note[], isPinned: boolean, gridRef: React.RefObject<HTMLDivElement>): JSX.Element => (
+    <div
+      ref={gridRef}
+      className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-y-3 gap-x-4 auto-rows-[0]"
+    >
       {notes.map((note) => (
         <div key={note.id} className="grid-item break-inside-avoid">
           <div className="content rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 ">
@@ -107,7 +134,7 @@ const Page: React.FC = () => {
           {pinnedNotes.length > 0 && (
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-white mb-4">PINNED</h2>
-              {renderNotes(pinnedNotes, true)}
+              {renderNotes(pinnedNotes, true, pinnedGridRef)}
             </div>
           )}
           <h2 className="text-2xl font-bold text-white mb-4">NOTES</h2>
@@ -115,7 +142,7 @@ const Page: React.FC = () => {
             filteredAndSortedNotes.filter(
               (note) => !pinnedNotes.some((p) => p.id === note.id)
             ),
-            false
+            false, notesGridRef
           )}
         </div>
       </div>

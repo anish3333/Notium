@@ -18,7 +18,7 @@ const Navbar = () => {
   } = useContext(NotesListContext);
 
   return (
-    <div className=" flex justify-between w-full backdrop-blur-md shadow-lg p-3 bg-gray-900 bg-opacity-50">
+    <div className=" flex justify-between w-full backdrop-blur-md shadow-lg p-3  bg-opacity-50">
       <div className="md:hidden flex text-slate-300 items-center gap-2 text-xl font-bold shadow-white">
         <Drawer />
       </div>

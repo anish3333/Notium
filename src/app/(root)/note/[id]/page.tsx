@@ -34,6 +34,7 @@ import { cn, formatDate } from "@/lib/utils";
 import OnlineUsers from "@/components/OnlineUsers";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
+import { SetReminderModal } from "@/components/SetReminderModal";
 
 const Page = () => {
   const { id }: { id: string } = useParams();
@@ -66,6 +67,7 @@ const Page = () => {
 
   const [reminderDate, setReminderDate] = useState<Date | null>(null);
   const [isEditingReminder, setIsEditingReminder] = useState(false);
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<UserDB[]>([]);
   const [onlineUsersModalOpen, setOnlineUsersModalOpen] = useState(false);
 
@@ -120,7 +122,6 @@ const Page = () => {
       setReminderDate(date);
       handleSetReminder(note, date);
     }
-    setIsEditingReminder(false);
   };
 
   const handleSave = async () => {
@@ -349,15 +350,11 @@ const Page = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100">
       <main className="container mx-auto py-12 px-6 max-w-7xl">
         <div className="flex items-center justify-between pb-4">
-
           <div className="text-gray-100 hover:text-blue-300 text-sm flex items-center justify-center w-fit">
-            <Link
-              href="/"
-            >
+            <Link href="/">
               <div className="flex">
-
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              <p> Back to Notes</p>
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                <p> Back to Notes</p>
               </div>
             </Link>
           </div>
@@ -431,32 +428,56 @@ const Page = () => {
                   <span className="text-gray-400">No reminder set</span>
                 )}
                 <Button
-                  onClick={() => setIsEditingReminder(!isEditingReminder)}
+                  onClick={() => setIsReminderModalOpen(true)}
                   size="sm"
                   className="transition-colors hover:bg-blue-500 bg-blue-600"
                 >
-                  {isEditingReminder ? "Cancel" : "Set Reminder"}
+                  {reminderDate ? "Edit Reminder" : "Set Reminder"}
                 </Button>
               </div>
-              {isEditingReminder && (
-                <DatePicker
-                  selected={reminderDate}
-                  onChange={handleReminderChange}
-                  showTimeSelect
-                  timeIntervals={15}
-                  dateFormat="MMMM d, yyyy h:mm aa"
-                  className="bg-gray-700 rounded-lg p-3 w-full border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  placeholderText="Set reminder"
-                  popperPlacement="bottom-start"
-                  shouldCloseOnSelect={false}
-                  showPreviousMonths={false}
-                />
-              )}
+              <SetReminderModal
+                isOpen={isReminderModalOpen}
+                onClose={() => setIsReminderModalOpen(false)}
+                onSetReminder={handleReminderChange}
+                currentDate={new Date()}
+              />
             </section>
           </div>
 
           {/* Right Column: Images and Collaboration */}
           <div className="space-y-8">
+            {/* Collaboration Section */}
+            <section className="bg-gray-800 rounded-2xl shadow-xl p-6">
+              <h2 className="text-2xl font-bold mb-4 text-gray-100">
+                Collaboration
+              </h2>
+              <div className="space-y-4">
+                <div
+                  className="flex items-center justify-center flex-wrap mb-4 gap-2
+                "
+                >
+                  <div className="flex items-center justify-between">
+                    <Button
+                      onClick={() => setOpenCollaboratorsList(true)}
+                      className="bg-purple-600 hover:bg-purple-700 transition-colors"
+                    >
+                      Manage collaborators (
+                      {collaboration?.collaborators?.length || 0})
+                    </Button>
+                  </div>
+
+                  <div>
+                    <OtherUsersBox
+                      users={users}
+                      value={userToCollaborate}
+                      setValue={setUserToCollaborate}
+                      placeholder="Add new collaborator"
+                    />
+                  </div>
+                </div>
+              </div>
+            </section>
+
             {/* Image Section */}
             <section className="bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
               <div className="p-6">
@@ -536,38 +557,6 @@ const Page = () => {
                       <Upload className="h-6 w-6 text-gray-400" />
                     </div>
                   </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Collaboration Section */}
-            <section className="bg-gray-800 rounded-2xl shadow-xl p-6">
-              <h2 className="text-2xl font-bold mb-4 text-gray-100">
-                Collaboration
-              </h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-center flex-wrap mb-4 gap-2
-                ">
-                  <div className="flex items-center justify-between">
-                    <Button
-                      onClick={() => setOpenCollaboratorsList(true)}
-                      className="bg-purple-600 hover:bg-purple-700 transition-colors"
-                    >
-                      Manage collaborators (
-                      {collaboration?.collaborators?.length || 0})
-                    </Button>
-                  </div>
-
-                  <div>
-
-                  <OtherUsersBox
-                    users={users}
-                    value={userToCollaborate}
-                    setValue={setUserToCollaborate}
-                    placeholder="Add new collaborator"
-                  />
-                  </div>
-
                 </div>
               </div>
             </section>

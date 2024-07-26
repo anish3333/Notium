@@ -126,9 +126,18 @@ const Sidebar = () => {
             <span>{link.text}</span>
           </Link>
         ))}
-      </nav>
-
-      <div className="flex flex-col gap-2 p-4 border-t border-gray-700">
+        <button
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors duration-200 relative"
+          onClick={handleOpenReminderModal}
+        >
+          <Bell className="h-5 w-5" />
+          <span>Reminders</span>
+          {activeReminders > 0 && (
+            <div className="w-5 h-4 rounded-full bg-red-500 text-white text-xs">
+            <span className="m-auto p-auto">{activeReminders}</span>
+          </div>
+          )}
+        </button>
         <div>
           <AddNote />
         </div>
@@ -152,21 +161,12 @@ const Sidebar = () => {
             </button>
           </>
         )}
-      </div>
+      </nav>
+
+
 
       <div className="flex flex-col gap-2 p-4  mt-auto border-t border-gray-700">
-        <button
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors duration-200 relative"
-          onClick={handleOpenReminderModal}
-        >
-          <Bell className="h-5 w-5" />
-          <span>Reminders</span>
-          {activeReminders > 0 && (
-            <div className="flex items-center justify-center bg-red-500 text-white rounded-full text-xs w-4 h-4">
-              {activeReminders}
-            </div>
-          )}
-        </button>
+        
 
         <Link
           href="/help"
@@ -189,3 +189,5 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
+
+

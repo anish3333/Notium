@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ClerkProvider, useUser } from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
 import NotesListProvider from "@/context/NotesListContext";
 import { Toaster } from "@/components/ui/toaster";
 import OrganizationProvider from "@/context/OrganisationContext";
@@ -35,13 +35,14 @@ export default function RootLayout({
       }}
     >
       <html lang="en">
-        <body className={`${inter.className} bg-[#0A1929]`}>
-          <OrganizationProvider>
-            <NotesListProvider>
-              {children}
-              <Toaster />
-            </NotesListProvider>
-          </OrganizationProvider>
+        <body className={`${inter.className}`}>
+        <div className="absolute top-0 z-[-2] h-[100%] w-[100%] bg-[#000000] bg-[radial-gradient(#ffffff33_1px,#00091d_1px)] bg-[size:20px_20px]"></div>
+            <OrganizationProvider>
+              <NotesListProvider>
+                {children}
+                <Toaster />
+              </NotesListProvider>
+            </OrganizationProvider>
         </body>
       </html>
     </ClerkProvider>

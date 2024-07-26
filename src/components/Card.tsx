@@ -18,6 +18,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Button } from "./ui/button";
+import { SetReminderModal } from "./SetReminderModal";
 
 const bgColorList = [
   "#FFD6E0", // Soft pink
@@ -50,10 +52,10 @@ const Card: React.FC<CardProps> = ({
   disabledOptions = {},
 }) => {
   const { handleSetReminder } = useContext(NotesListContext);
-  const [isEditingReminder, setIsEditingReminder] = useState(false);
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const [reminderDate, setReminderDate] = useState<Date | null>(null);
-  const [bgColor] = useState(() => 
-    bgColorList[Math.floor(Math.random() * bgColorList.length)]
+  const [bgColor] = useState(
+    () => bgColorList[Math.floor(Math.random() * bgColorList.length)]
   );
 
   useEffect(() => {
@@ -80,7 +82,6 @@ const Card: React.FC<CardProps> = ({
       setReminderDate(date);
       handleSetReminder(note, date);
     }
-    setIsEditingReminder(false);
   };
 
   return (
@@ -147,16 +148,16 @@ const Card: React.FC<CardProps> = ({
                   </button>
                 )}
                 {!disabledOptions.reminder && (
-                  <button
-                    className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 transition-colors duration-200"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsEditingReminder(!isEditingReminder);
-                    }}
-                  >
-                    <Clock className="w-4 h-4 mr-2" />
-                    Set Reminder
-                  </button>
+                    <button
+                      className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 transition-colors duration-200"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsReminderModalOpen(true);
+                      }}
+                    >
+                      <Clock className="w-4 h-4 mr-2" />
+                      Set Reminder
+                    </button>
                 )}
               </div>
             </PopoverContent>
@@ -166,28 +167,12 @@ const Card: React.FC<CardProps> = ({
       <div className="text-base max-h-40 overflow-hidden mb-2 mt-2 leading-relaxed">
         {note.content}
       </div>
-      {reminderDate && reminderDate >= new Date() && (
-        <div className="text-sm text-yellow-600 flex items-center mt-2">
-          <Clock className="w-4 h-4 mr-1" />
-          {formatDate(reminderDate)}
-        </div>
-      )}
-      {isEditingReminder && (
-        <div className="mt-2" onClick={(e) => e.stopPropagation()}>
-          <DatePicker
-            selected={reminderDate}
-            onChange={handleReminderChange}
-            showTimeSelect
-            timeIntervals={1}
-            dateFormat="MMMM d, yyyy h:mm aa"
-            className="bg-white text-gray-800 rounded p-2 w-full border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-            placeholderText="Set reminder"
-            onClickOutside={() => setIsEditingReminder(false)}
-            popperPlacement="bottom-start"
-            shouldCloseOnSelect={false}
-          />
-        </div>
-      )}
+      <SetReminderModal
+        isOpen={isReminderModalOpen}
+        onClose={() => setIsReminderModalOpen(false)}
+        onSetReminder={handleReminderChange}
+        currentDate={new Date()}
+      />
     </div>
   );
 };
