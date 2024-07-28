@@ -21,13 +21,13 @@ export async function checkReminders(userId: string) {
   );
 
   const querySnapshot = await getDocs(q);
-  console.log("Query snapshot:", querySnapshot);
+  // console.log("Query snapshot:", querySnapshot);
   const data = querySnapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   }));
 
-  console.log("Data:", data);
+  // console.log("Data:", data);
 
   querySnapshot.forEach(async (document) => {
     const noteData = document.data();

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useUser } from '@clerk/nextjs';
-import { useParams, useRouter } from 'next/navigation';
-import React, { ReactNode } from 'react';
+import { useUser } from "@clerk/nextjs";
+import { useParams, useRouter } from "next/navigation";
+import React, { ReactNode } from "react";
 
 interface SecurityProviderProps {
   children: ReactNode;

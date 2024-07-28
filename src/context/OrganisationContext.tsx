@@ -21,11 +21,12 @@ import { Note } from "@/types";
 import { toast } from "@/components/ui/use-toast";
 import { User } from "@clerk/clerk-sdk-node";
 import { deleteObject, ref } from "firebase/storage";
+import { auth } from "@clerk/nextjs/server";
 
 interface Organization {
   id: string;
   name: string;
-  author: string;
+  author: string[];
   members: string[];
   notes: string[];
 }
@@ -78,6 +79,7 @@ interface OrganizationContextValue {
   removeOrgNoteFromPinnedNotes: (noteId: string) => Promise<void>;
   leaveOrganization: (orgId: string) => Promise<void>;
   deleteOrganization: (orgId: string) => Promise<void>;
+  makeAdmin: (orgId: string, userId: string) => Promise<void>;
 }
 
 const OrganizationContext = createContext<OrganizationContextValue>({
@@ -106,6 +108,7 @@ const OrganizationContext = createContext<OrganizationContextValue>({
   removeOrgNoteFromPinnedNotes: async () => {},
   leaveOrganization: async () => {},
   deleteOrganization: async () => {},
+  makeAdmin: async () => {},
 });
 
 const OrganizationProvider = ({ children }: { children: ReactNode }) => {
@@ -156,7 +159,7 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const filteredOrgs = organizations.filter(
-        (org) => org.author === user.id
+        (org) => org.author.includes(user.id)
       );
 
       const requestCollection = collection(db, "joinRequests");
@@ -198,7 +201,7 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     try {
       await addDoc(collection(db, "organizations"), {
         name,
-        author: user.id,
+        author: [user.id],
         members: members ? [user.id, ...members] : [user.id],
         notes: [],
       });
@@ -375,6 +378,7 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
       const orgRef = doc(db, "organizations", orgId);
 
       await updateDoc(orgRef, {
+        author: arrayRemove(userId),
         members: arrayRemove(userId),
       });
       toast({
@@ -384,6 +388,23 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
       fetchOrganizationMembers(orgId);
     } catch (error) {
       console.error("Error removing member from organization:", error);
+    }
+  };
+
+
+  const makeAdmin = async (orgId: string, userId: string) => {
+    if (!user) return;
+    try {
+      const orgRef = doc(db, "organizations", orgId);
+      await updateDoc(orgRef, {
+        author: arrayUnion(userId),
+      });
+
+
+      fetchOrganizations();
+      fetchOrganizationMembers(orgId);
+    } catch (error) {
+      console.error("Error making admin:", error);
     }
   };
 
@@ -460,50 +481,48 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const leaveOrganization = async (orgId: string) => {
-    if (!user) return;
+    if (!user || !currentOrganization) return;
     try {
-      const orgRef = doc(db, "organizations", orgId);
-      const orgDoc = await getDoc(orgRef);
       
-      if (!orgDoc.exists()) {
-        toast({
-          variant: "destructive",
-          title: "Organization not found",
+      
+  
+      const orgData = currentOrganization;
+  
+      if (orgData.author.includes(user.id) ) {
+
+        if (orgData.author.length === 1) {
+          toast({
+            variant: "destructive",
+            title: "Unable to leave organization",
+            description: "Transfer ownership to another user or delete the organization instead",
+          });
+          return;
+        }
+      
+        const orgRef = doc(db, "organizations", orgId);
+        
+        await updateDoc(orgRef, {
+          author: arrayRemove(user.id),
+          members: arrayRemove(user.id),
         });
-        return;
-      }
-  
-      const orgData = orgDoc.data() as Organization;
-  
-      if (orgData.author === user.id) {
-        toast({
-          variant: "destructive",
-          title: "You can't leave an organization you created",
-          description: "Transfer ownership or delete the organization instead",
+    
+        // Clear local storage for this org
+        setOrgPinnedNotes(prev => {
+          const { [orgId]: _, ...rest } = prev;
+          return rest;
         });
-        return;
-      }
-  
-      await updateDoc(orgRef, {
-        members: arrayRemove(user.id),
-      });
-  
-      // Clear local storage for this org
-      setOrgPinnedNotes(prev => {
-        const { [orgId]: _, ...rest } = prev;
-        return rest;
-      });
-      setOrgSelectedNotes(prev => {
-        const { [orgId]: _, ...rest } = prev;
-        return rest;
-      });
-  
-      toast({
-        title: "You have left the organization",
-      });
-  
-      // Trigger a reload of organizations
-      fetchOrganizations();
+        setOrgSelectedNotes(prev => {
+          const { [orgId]: _, ...rest } = prev;
+          return rest;
+        });
+    
+        toast({
+          title: "You have left the organization",
+        });
+    
+        fetchOrganizations();
+
+    }
   
     } catch (error) {
       console.error("Error leaving organization:", error);
@@ -515,7 +534,6 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  //TODO: Review this code
 
   const deleteNoteImage = async (id: string, imageUrltoDelete: string) => {
     if (!id) return;
@@ -644,7 +662,8 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         removeOrgNoteFromSelectedNotes,
         removeOrgNoteFromPinnedNotes,
         leaveOrganization,
-        deleteOrganization
+        deleteOrganization,
+        makeAdmin
       }}
     >
       {children}

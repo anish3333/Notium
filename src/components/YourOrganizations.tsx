@@ -32,7 +32,7 @@ const YourOrganizations = () => {
                   <FiFileText className="mr-1" /> View Details
                 </Link>
                 {
-                org.author === user?.id ? (
+                user && org.author.includes(user.id) ? (
                   <button
                     className="text-red-400 hover:text-red-300"
                     onClick={(e) => {
