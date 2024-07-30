@@ -33,7 +33,7 @@ const Page: React.FC = () => {
   }, [user]);
 
   const recalculateLayout = (gridRef: React.RefObject<HTMLDivElement>) => {
-    if (!gridRef.current) {
+    if (!gridRef?.current) {
       return;
     }
 
@@ -108,7 +108,7 @@ const Page: React.FC = () => {
   const renderNotes = (notes: Note[], isPinned: boolean, gridRef: React.RefObject<HTMLDivElement>): JSX.Element => (
     <div
       ref={gridRef}
-      className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-y-3 gap-x-4 auto-rows-[0]"
+      className="grid grid-cols-1 max-sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-y-3 gap-x-4 auto-rows-[0] w-full"
     >
       {notes.map((note) => (
         <div key={note.id} className="grid-item break-inside-avoid">

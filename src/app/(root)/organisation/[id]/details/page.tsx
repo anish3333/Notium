@@ -13,6 +13,7 @@ import {
   Users,
   Info,
   Settings,
+  Share2,
 } from "lucide-react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
@@ -25,6 +26,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import MembersTable from "@/components/MembersTable";
+import ShareModal from "@/components/ShareModal";
 
 const Page = () => {
   const {
@@ -37,6 +39,7 @@ const Page = () => {
   const { user } = useUser();
   const [admins, setAdmins] = useState<UserDB[]>([]);
   const router = useRouter();
+  const [shareOpen, setShareOpen] = useState(false);
 
   let isAdmin = user?.id && currentOrganization?.author.includes(user.id);
 
@@ -97,11 +100,28 @@ const Page = () => {
 
   return (
     <div className="px-4 py-8 bg-gradient-to-br from-slate-900 to-slate-800 text-slate-100 flex flex-col max-md:w-[calc(100vw-17px)] md:w-[calc(100vw-280px)] min-h-screen">
+      
+      
       <div className="mb-8 bg-slate-800 rounded-lg shadow-xl p-6 border border-slate-700">
-        <h1 className="text-3xl sm:text-4xl font-bold text-slate-100 mb-2">
-          {currentOrganization.name}
-        </h1>
+        
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl sm:text-4xl font-bold text-slate-100 mb-2">
+            {currentOrganization.name}
+          </h1>
+          <button onClick={() => setShareOpen(true)}>
+            <Share2 className="w-6 h-6 mr-2 text-slate-400 hover:text-slate-300" />
+          </button>
+        </div>
+
         <p className="text-slate-400">Organization Management Dashboard</p>
+
+        <ShareModal
+          url={`/organisation?id=${currentOrganization.id}`}
+          open={shareOpen}
+          handleClose={() => setShareOpen(false)}
+          title="Share link"  
+          description="Share your organization link with your teammates"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -111,14 +131,7 @@ const Page = () => {
               <h2 className="text-xl sm:text-2xl font-semibold text-slate-100 flex items-center">
                 <Users className="mr-2" /> Members
               </h2>
-              {isAdmin && (
-                <Button
-                  variant="outline"
-                  className="bg-slate-700 text-slate-200 hover:bg-slate-600"
-                >
-                  Invite Member
-                </Button>
-              )}
+              
             </div>
             <div className="w-full overflow-x-auto">
               <MembersTable

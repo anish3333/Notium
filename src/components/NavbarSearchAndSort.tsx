@@ -29,12 +29,12 @@ const NavbarSearchAndSort: React.FC<NavbarSearchAndSortProps> = ({
 }) => {
   return (
     <div className="flex gap-2 w-full items-center justify-between p-2 "> 
-      <div className="flex items-center gap-1 bg-gray-700 text-white rounded-md text-sm justify-start w-full box">
+      <div className=" p-1 flex items-center gap-1 text-white text-sm justify-start w-full box">
         <Search className=" absolute ml-1  text-gray-400 w-4 h-4 " />
         <input
           type="text"
           placeholder="Search..."
-          className=" pl-6 py-1 bg-gray-700 text-white rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="bg-gray-700 rounded-full pl-6 p-1 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
           value={searchTerm}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setSearchTerm(e.target.value)

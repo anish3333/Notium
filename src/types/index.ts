@@ -42,4 +42,11 @@ export interface Reminder {
   reminderSent ?: boolean;
 }
 
+export interface ShareOption {
+  name: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  link: string;
+}
+
+
 export type SortCriteria = "dateCreated" | "dateModified" | "title";

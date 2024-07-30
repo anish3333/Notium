@@ -5,13 +5,7 @@ import RequestJoinOrg from "@/components/RequestJoinOrg";
 import JoinRequests from "@/components/JoinRequests";
 import { OrgForm } from "@/components/OrgForm";
 import { useUser } from "@clerk/nextjs";
-import {
-  FiUser,
-  FiActivity,
-  FiBriefcase,
-  FiUserPlus,
-  FiUsers,
-} from "react-icons/fi";
+import { FiActivity } from "react-icons/fi";
 import OrgStats from "@/components/OrgStats";
 
 const Dashboard = () => {
@@ -34,20 +28,20 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
           <div className="md:col-span-2 lg:col-span-3 space-y-6">
             <YourOrganizations />
           </div>
           <div>
             <RequestJoinOrg />
           </div>
-          <div>
+          <div className="space-y-6 lg:col-span-2">
             <OrgForm />
           </div>
-          <div className="space-y-6">
+          <div className="space-y-6 md:col-span-2">
             <OrgStats />
           </div>
-          <div className="md:col-span-2 lg:col-span-2 h-full">
+          <div className="md:col-span-2 lg:col-span-4">
             <JoinRequests />
           </div>
         </div>
@@ -55,8 +49,6 @@ const Dashboard = () => {
     </div>
   );
 };
-
-
 
 const RecentActivity = () => (
   <div className="bg-gray-800 rounded-lg p-6 shadow-lg h-full">

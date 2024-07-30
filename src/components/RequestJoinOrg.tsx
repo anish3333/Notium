@@ -46,7 +46,7 @@ const RequestJoinOrg = () => {
 
 
   useEffect(() => {
-    if (submit === "true" && id && user) {
+    if (id && id?.length > 0 && user) {
       form.setValue("orgId", id);
       form.handleSubmit(onSubmit)();
     }

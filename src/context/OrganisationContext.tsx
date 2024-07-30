@@ -218,14 +218,16 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
       if (!org.exists()) {
         toast({
           variant: "destructive",
-          title: "Organization not found",
+          title: "Unable to join organization",
+          description: "Organization not found",
         });
         return;
       }
       if (org.data().members.includes(user.id)) {
         toast({
           variant: "destructive",
-          title: "You are already a member of this organization",
+          title: "Unable to join organization",
+          description: "You are already a member of this organization",
         });
         return;
       }
@@ -246,14 +248,17 @@ const OrganizationProvider = ({ children }: { children: ReactNode }) => {
           status: "pending",
         });
         toast({
-          title: "Request to join organization sent",
+
+          title: `successfully sent request to join ${org.data().name}`,
+          content: "Wait for the admin to approve or reject your request",
         });
         fetchJoinRequests();
         return;
       } else {
         toast({
           variant: "destructive",
-          title: "You already have a pending request to join this organization",
+          title: "Unable to join organization",
+          content: "You already have a pending request to join this organization",
         });
         return;
       }
