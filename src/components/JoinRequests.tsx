@@ -20,7 +20,7 @@ const JoinRequests = () => {
 
   if (joinRequests.length === 0) {
     return (
-      <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
+      <div className="bg-gray-800 rounded-lg p-6 shadow-lg h-full">
         <h2 className="text-2xl font-semibold mb-4">Join Requests</h2>
         <p className="text-gray-400">There are no pending join requests at the moment.</p>
       </div>

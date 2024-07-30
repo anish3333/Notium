@@ -23,7 +23,7 @@ import { User } from "@clerk/clerk-sdk-node";
 import { deleteObject, ref } from "firebase/storage";
 import { auth } from "@clerk/nextjs/server";
 
-interface Organization {
+export interface Organization {
   id: string;
   name: string;
   author: string[];

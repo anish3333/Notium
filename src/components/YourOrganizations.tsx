@@ -8,7 +8,7 @@ const YourOrganizations = () => {
   const { organizations, leaveOrganization, deleteOrganization } = useContext(OrganizationContext);
   const { user } = useUser();
   return (
-    <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
+    <div className="bg-gray-800 rounded-lg p-6 shadow-lg h-full">
       <h2 className="text-2xl font-semibold mb-4 flex items-center">
         <FiBriefcase className="mr-2" /> Your Organizations
       </h2>

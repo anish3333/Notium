@@ -38,18 +38,17 @@ const Dashboard = () => {
           <div className="md:col-span-2 lg:col-span-3 space-y-6">
             <YourOrganizations />
           </div>
-          <div className="space-y-6">
-            <OrgStats />
-            <JoinRequests />
-          </div>
-          <div className="md:col-span-2 lg:col-span-2">
-            <RecentActivity />
-          </div>
           <div>
             <RequestJoinOrg />
           </div>
           <div>
             <OrgForm />
+          </div>
+          <div className="space-y-6">
+            <OrgStats />
+          </div>
+          <div className="md:col-span-2 lg:col-span-2 h-full">
+            <JoinRequests />
           </div>
         </div>
       </div>

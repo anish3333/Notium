@@ -23,7 +23,11 @@ const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) => {
     return null; // Or a loading spinner
   }
 
-  return <>{children}</>;
+  return (
+    <div>
+      {children}
+    </div>
+  );
 };
 
 const layout = ({ children }: { children: ReactNode }) => {
