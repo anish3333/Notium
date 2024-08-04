@@ -21,26 +21,27 @@ const layout = ({ children }: { children: React.ReactNode }) => {
     }, 15000);
     return () => clearInterval(intervalId);
   }, [user]);
-  
+
   return (
     <>
-    <SyncUserWithFirebase>
-      <div className="flex min-h-screen ">
-        <div className="hidden md:flex">
-          <Sidebar />
+      <SyncUserWithFirebase>
+        <div className="flex min-h-screen">
+          <div className="hidden md:flex">
+            <Sidebar />
+          </div>
+          <div className="flex-1 flex flex-col">
+            <main className="flex-1 md:ml-64">
+              <div className="flex flex-1 sticky top-0">
+                <Navbar />
+              </div>
+              <div className="p-1 md:rounded-tl-xl bg-gray-800">
+                <div>{children}</div>
+              </div>
+            </main>
+          </div>
         </div>
-        <div className="flex-1 flex flex-col">
-          <main className="flex-1 md:ml-64">
-            <div className="flex flex-1 sticky top-0">
-              <Navbar />
-            </div>
-            {children}
-          </main>
-        </div>
-      </div>
-    </SyncUserWithFirebase>
+      </SyncUserWithFirebase>
     </>
-    
   );
 };
 export default layout;

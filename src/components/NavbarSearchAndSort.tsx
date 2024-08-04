@@ -28,7 +28,7 @@ const NavbarSearchAndSort: React.FC<NavbarSearchAndSortProps> = ({
   toggleSortDirection,
 }) => {
   return (
-    <div className="flex gap-2 w-full items-center justify-between p-2 "> 
+    <div className="flex gap-2 w-full items-center justify-between"> 
       <div className=" p-1 flex items-center gap-1 text-white text-sm justify-start w-full box">
         <Search className=" absolute ml-1  text-gray-400 w-4 h-4 " />
         <input

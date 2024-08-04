@@ -35,7 +35,7 @@ export default function RootLayout({
       }}
     >
       <html lang="en">
-        <body className={`${inter.className} bg-[#1C1F2E]`}>
+        <body className={`${inter.className} bg-gray-900`}>
           {/* <div className="absolute top-0 z-[-2] h-[100%] w-[100%] bg-[#000000] bg-[radial-gradient(#ffffff33_1px,#00091d_1px)] bg-[size:20px_20px]"></div> */}
           <div className="relative z-0">
             <OrganizationProvider>

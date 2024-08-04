@@ -145,9 +145,9 @@ const Page = () => {
           </div>
         </div>
 
-        <div className="space-y-8">
+        <div className= "flex flex-col justify-between space-y-8">
           {isAdmin && (
-            <div className="bg-slate-800 rounded-lg shadow-xl p-6 border border-slate-700">
+            <div className="bg-slate-800 rounded-lg shadow-xl p-6 border w-full border-slate-700 h-full">
               <h2 className="text-xl sm:text-2xl font-semibold text-slate-100 mb-4 flex items-center">
                 <Settings className="mr-2" /> Admin Actions
               </h2>
@@ -208,7 +208,7 @@ const Page = () => {
           <Button
             variant="outline"
             onClick={handleLeaveOrg}
-            className="w-full bg-slate-700 text-red-400 hover:bg-slate-600 hover:text-red-300"
+            className="w-full h-fit  bg-slate-700 text-red-400 hover:bg-slate-600 hover:text-red-300"
           >
             <LogOut className="w-4 h-4 mr-2" />
             Leave Organization
